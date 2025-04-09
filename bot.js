@@ -186,6 +186,10 @@ bot.onText(/\/update/, (msg) => {
 });
 
 bot.onText(/\/menu/, (msg) => {
+  if (msg.from.id !== allowedUserId) {
+    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
+  }
+
   const options = {
     reply_markup: {
       inline_keyboard: [
@@ -208,10 +212,6 @@ bot.on('callback_query', (callbackQuery) => {
   if (data === 'get_system_info') {
     // Gọi hàm lấy thông tin hệ thống
     bot.sendMessage(msg.chat.id, 'Đang lấy thông tin hệ thống...');
-    if (msg.from.id !== allowedUserId) {
-      return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-    }
-  
     // Lenh de lay thong tin trang thai cua router
     router.write('/system/resource/print')
       .then((result) => {
@@ -254,10 +254,7 @@ bot.on('callback_query', (callbackQuery) => {
   } else if (data === 'list_connections') {
     // Gọi hàm lấy danh sách kết nối
     bot.sendMessage(msg.chat.id, 'Đang lấy danh sách kết nối...');
-    if (msg.from.id !== allowedUserId) {
-      return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-    }
-  
+
     // Lenh de lay danh sach ket noi hien tai
     router.write('/ip/arp/print')
       .then((result) => {
@@ -278,10 +275,6 @@ bot.on('callback_query', (callbackQuery) => {
   } else if (data === 'reboot_router') {
     // Gọi hàm khởi động lại router
     bot.sendMessage(msg.chat.id, 'Đang khởi động lại router...');
-    if (msg.from.id !== allowedUserId) {
-      return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-    }
-  
     // Lenh de reboot RouterOS
     router.write('/system/reboot')
       .then((result) => {
@@ -294,10 +287,6 @@ bot.on('callback_query', (callbackQuery) => {
   } else if (data === 'check_bandwidth') {
     // Gọi hàm kiểm tra băng thông
     bot.sendMessage(msg.chat.id, 'Đang kiểm tra băng thông...');
-    if (msg.from.id !== allowedUserId) {
-      return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-    }
-  
     // Lenh de lay thong tin bang thong
     router.write('/interface/ethernet/print')
       .then((result) => {
