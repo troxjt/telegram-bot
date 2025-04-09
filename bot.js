@@ -52,9 +52,11 @@ bot.onText(/\/menu/, (msg) => {
     reply_markup: {
       inline_keyboard: [
         [{ text: 'Thông tin hệ thống', callback_data: 'get_system_info' }],
+        [{ text: 'Thông tin hệ thống', callback_data: 'get_system_info' }],
         [{ text: 'Danh sách kết nối', callback_data: 'list_connections' }],
         [{ text: 'Kiểm tra băng thông', callback_data: 'check_bandwidth' }],
         [{ text: 'Trạng thái giao diện', callback_data: 'interface-status' }],
+        [{ text: '📛 Danh sách IP bị chặn', callback_data: 'show_blacklist' }],
         [{ text: 'Update code bot', callback_data: 'update_code_bot' }],
         [{ text: 'Khởi động lại router', callback_data: 'reboot_router' }]
       ]
@@ -85,12 +87,12 @@ bot.on('callback_query', (callbackQuery) => {
   
                 // Gui thông tin chi tiet ve trạng thái
                 const statusMsg = `THÔNG TIN PC ROUTER:
-                  - NAME: ${routerName}
-                  - CPU: ${status['cpu-load']}%
-                  - RAM: ${status['free-memory']} bytes
-                  - DISK: ${status['total-memory']} bytes
-                  - UPTIME: ${status['uptime']}
-                  - ROUTEROS: ${status['version']}`;
+              - 🔧 NAME: ${routerName}
+              - ⚙️ CPU: ${status['cpu-load']}%
+              - 🧠 RAM: ${status['free-memory']} bytes
+              - 🔧 DISK: ${status['total-memory']} bytes
+              - ⏱️ UPTIME: ${status['uptime']}
+              - 🛠️ ROUTEROS: ${status['version']}`;
                   
                 bot.sendMessage(msg.chat.id, statusMsg);
               })
@@ -153,6 +155,44 @@ bot.on('callback_query', (callbackQuery) => {
     .catch((err) => {
       bot.sendMessage(msg.chat.id, 'Lỗi khi lấy trạng thái giao diện.');
       console.error(err);
+    });
+  } else if (data === 'show_blacklist') {
+    bot.sendMessage(msg.chat.id, '📥 Đang lấy danh sách blacklist tổng hợp...');
+    const listNames = ['blacklist', 'ssh_blacklist', 'ftp_blacklist', 'port_scanners'];
+    let resultMessage = '📊 **DANH SÁCH CÁC ĐỊA CHỈ BỊ CHẶN**\n\n';
+    let fetchCount = 0;
+
+    listNames.forEach((listName) => {
+      router.write('/ip/firewall/address-list/print', [
+        `?list=${listName}`
+      ])
+      .then((entries) => {
+        resultMessage += `📂 *${listName.toUpperCase()}* (${entries.length} mục):\n`;
+        if (entries.length === 0) {
+          resultMessage += '_Không có địa chỉ nào._\n\n';
+        } else {
+          entries.forEach((entry, idx) => {
+            const comment = entry.comment ? `(${entry.comment})` : '';
+            resultMessage += ` ${idx + 1}. ${entry.address} ${comment}\n`;
+          });
+          resultMessage += '\n';
+        }
+
+        fetchCount++;
+        if (fetchCount === listNames.length) {
+          // Sau khi đã lấy hết tất cả danh sách
+          const chunks = resultMessage.match(/[\s\S]{1,3500}/g); // chia nhỏ nếu quá dài
+          chunks.forEach(chunk => bot.sendMessage(msg.chat.id, chunk, { parse_mode: 'Markdown' }));
+        }
+      })
+      .catch((err) => {
+        resultMessage += `⚠️ Lỗi khi lấy danh sách ${listName}: ${err.message}\n\n`;
+        fetchCount++;
+        if (fetchCount === listNames.length) {
+          const chunks = resultMessage.match(/[\s\S]{1,3500}/g);
+          chunks.forEach(chunk => bot.sendMessage(msg.chat.id, chunk, { parse_mode: 'Markdown' }));
+        }
+      });
     });
   } else if (data === 'update_code_bot') {
     bot.sendMessage(msg.chat.id, 'Đang update bot...');
