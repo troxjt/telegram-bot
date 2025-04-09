@@ -43,151 +43,9 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(msg.chat.id, 'Chao ban! Hay su dung cac lenh de dieu khien router cua ban.');
 });
 
-bot.onText(/\/reboot/, (msg) => {
-  if (msg.from.id !== allowedUserId) {
-    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-  }
-
-  // Lenh de reboot RouterOS
-  router.write('/system/reboot')
-    .then((result) => {
-      bot.sendMessage(msg.chat.id, 'RouterOS dang khoi dong lai...');
-    })
-    .catch((err) => {
-      bot.sendMessage(msg.chat.id, 'Loi khi khoi dong lai router.');
-      console.error(err);
-    });
-});
-
-bot.onText(/\/trangthai/, (msg) => {
-  if (msg.from.id !== allowedUserId) {
-    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-  }
-
-  // Lenh de lay thong tin trang thai cua router
-  router.write('/system/resource/print')
-    .then((result) => {
-      const status = result[0];
-      
-      // Lay thong tin chi tiet ve CPU, Memory, Uptime, va Version
-      router.write('/system/identity/print')
-        .then((identity) => {
-          const routerName = identity[0]['name'];
-          
-          // Lay thong tin ve License
-          router.write('/system/license/print')
-            .then((license) => {
-
-              // Gui thong tin chi tiet ve trang thai
-              const statusMsg = `Thong tin RouterOS:
-                - Ten Router: ${routerName}
-                - Tai CPU: ${status['cpu-load']}%
-                - Bo nho tu do: ${status['free-memory']} bytes
-                - Tong bo nho: ${status['total-memory']} bytes
-                - Thoi gian hoat dong: ${status['uptime']}
-                - Phien ban RouterOS: ${status['version']}`;
-                
-              bot.sendMessage(msg.chat.id, statusMsg);
-            })
-            .catch((err) => {
-              bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin license.');
-              console.error(err);
-            });
-        })
-        .catch((err) => {
-          bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin Router Identity.');
-          console.error(err);
-        });
-    })
-    .catch((err) => {
-      bot.sendMessage(msg.chat.id, 'Loi khi lay trang thai router.');
-      console.error(err);
-    });
-});
-
-bot.onText(/\/ketnoi/, (msg) => {
-  if (msg.from.id !== allowedUserId) {
-    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-  }
-
-  // Lenh de lay danh sach ket noi hien tai
-  router.write('/ip/arp/print')
-    .then((result) => {
-      if (result.length > 0) {
-        let connections = 'Danh sach ket noi:\n';
-        result.forEach((conn) => {
-          connections += `IP: ${conn['address']}, MAC: ${conn['mac-address']}\n`;
-        });
-        bot.sendMessage(msg.chat.id, connections);
-      } else {
-        bot.sendMessage(msg.chat.id, 'Khong co ket noi nao hien tai.');
-      }
-    })
-    .catch((err) => {
-      bot.sendMessage(msg.chat.id, 'Loi khi lay danh sach ket noi.');
-      console.error(err);
-    });
-});
-
-bot.onText(/\/bangthong/, (msg) => {
-  if (msg.from.id !== allowedUserId) {
-    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-  }
-
-  // Lenh de lay thong tin bang thong
-  router.write('/interface/ethernet/print')
-    .then((result) => {
-      let statsMsg = 'Thong tin bang thong:\n';
-      result.forEach((interfaceInfo) => {
-        statsMsg += `Ten: ${interfaceInfo['name']}, Luu luong: ${interfaceInfo['rx-byte'] / 1024 / 1024} MB/ ${interfaceInfo['tx-byte'] / 1024 / 1024} MB\n`;
-      });
-      bot.sendMessage(msg.chat.id, statsMsg);
-    })
-    .catch((err) => {
-      bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin bang thong.');
-      console.error(err);
-    });
-});
-
-bot.onText(/\/interface-status/, (msg) => {
-  if (msg.from.id !== allowedUserId) {
-    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-  }
-
-  // Lenh de kiem tra trang thai giao dien mang
-  router.write('/interface/print')
-    .then((result) => {
-      let interfacesStatus = 'Trang thai giao dien:\n';
-      result.forEach((interfaceInfo) => {
-        interfacesStatus += `Giao dien: ${interfaceInfo['name']}, Trang thai: ${interfaceInfo['running'] ? 'Hoat dong' : 'Dung'}\n`;
-      });
-      bot.sendMessage(msg.chat.id, interfacesStatus);
-    })
-    .catch((err) => {
-      bot.sendMessage(msg.chat.id, 'Loi khi lay trang thai giao dien.');
-      console.error(err);
-    });
-});
-
-bot.onText(/\/update/, (msg) => {
-  if (msg.from.id !== allowedUserId) {
-    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
-  }
-
-  const exec = require('child_process').exec;
-  exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err, stdout, stderr) => {
-    if (err) {
-      bot.sendMessage(msg.chat.id, 'Loi khi cap nhat bot.');
-      console.error(err);
-    } else {
-      bot.sendMessage(msg.chat.id, 'Bot da duoc cap nhat va khoi dong lai.');
-    }
-  });
-});
-
 bot.onText(/\/menu/, (msg) => {
   if (msg.from.id !== allowedUserId) {
-    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
+    return bot.sendMessage(msg.chat.id, 'Bạn không có quyền sử dụng bot.');
   }
 
   const options = {
@@ -196,7 +54,9 @@ bot.onText(/\/menu/, (msg) => {
         [{ text: 'Thông tin hệ thống', callback_data: 'get_system_info' }],
         [{ text: 'Danh sách kết nối', callback_data: 'list_connections' }],
         [{ text: 'Khởi động lại router', callback_data: 'reboot_router' }],
-        [{ text: 'Kiểm tra băng thông', callback_data: 'check_bandwidth' }]
+        [{ text: 'Kiểm tra băng thông', callback_data: 'check_bandwidth' }],
+        [{ text: 'Trạng thái giao diện', callback_data: 'interface-status' }],
+        [{ text: 'Update code bot', callback_data: 'update_code_bot' }]
       ]
     }
   };
@@ -300,5 +160,32 @@ bot.on('callback_query', (callbackQuery) => {
         bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin bang thong.');
         console.error(err);
       });
+  } else if (data === 'interface-status') {
+    // Gọi hàm kiểm tra trạng thái giao diện mạng
+    bot.sendMessage(msg.chat.id, 'Đang kiểm tra trạng thái giao diện mạng...');
+    router.write('/interface/print')
+    .then((result) => {
+      let interfacesStatus = 'Trang thai giao dien:\n';
+      result.forEach((interfaceInfo) => {
+        interfacesStatus += `Giao dien: ${interfaceInfo['name']}, Trang thai: ${interfaceInfo['running'] ? 'Hoat dong' : 'Dung'}\n`;
+      });
+      bot.sendMessage(msg.chat.id, interfacesStatus);
+    })
+    .catch((err) => {
+      bot.sendMessage(msg.chat.id, 'Loi khi lay trang thai giao dien.');
+      console.error(err);
+    });
+  } else if (data === 'update_code_bot') {
+    // Gọi hàm update bot
+    bot.sendMessage(msg.chat.id, 'Đang update bot...');
+    const exec = require('child_process').exec;
+    exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err, stdout, stderr) => {
+      if (err) {
+        bot.sendMessage(msg.chat.id, 'Loi khi cap nhat bot.');
+        console.error(err);
+      } else {
+        bot.sendMessage(msg.chat.id, 'Bot da duoc cap nhat va khoi dong lai.');
+      }
+    });
   }
 });
