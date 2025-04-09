@@ -69,6 +69,7 @@ bot.on('callback_query', (callbackQuery) => {
   const msg = callbackQuery.message;
   const data = callbackQuery.data;
   if (data === 'get_system_info') {
+    bot.sendMessage(msg.chat.id, 'Đang lấy thông tin hệ thống...');
     router.write('/system/resource/print')
       .then((result) => {
         const status = result[0];
@@ -108,6 +109,7 @@ bot.on('callback_query', (callbackQuery) => {
         console.error(err);
       });
   } else if (data === 'list_connections') {
+    bot.sendMessage(msg.chat.id, 'Đang lấy danh sách kết nối...');
     router.write('/ip/arp/print')
       .then((result) => {
         if (result.length > 0) {
@@ -125,6 +127,7 @@ bot.on('callback_query', (callbackQuery) => {
         console.error(err);
       });
   } else if (data === 'check_bandwidth') {
+    bot.sendMessage(msg.chat.id, 'Đang kiểm tra băng thông...');
     router.write('/interface/ethernet/print')
       .then((result) => {
         let statsMsg = 'THÔNG TIN BĂNG THÔNG:\n';
@@ -138,6 +141,7 @@ bot.on('callback_query', (callbackQuery) => {
         console.error(err);
       });
   } else if (data === 'interface-status') {
+    bot.sendMessage(msg.chat.id, 'Đang kiểm tra trạng thái giao diện mạng...');
     router.write('/interface/print')
     .then((result) => {
       let interfacesStatus = 'TRẠNG THÁI GIAO DIỆN:\n';
@@ -151,6 +155,7 @@ bot.on('callback_query', (callbackQuery) => {
       console.error(err);
     });
   } else if (data === 'update_code_bot') {
+    bot.sendMessage(msg.chat.id, 'Đang update bot...');
     const exec = require('child_process').exec;
     exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err, stdout, stderr) => {
       if (err) {
@@ -161,6 +166,7 @@ bot.on('callback_query', (callbackQuery) => {
       }
     });
   } else if (data === 'reboot_router') {
+    bot.sendMessage(msg.chat.id, 'Chuẩn bị khởi động lại router...');
     router.write('/system/reboot')
       .then((result) => {
         bot.sendMessage(msg.chat.id, 'RouterOS đang khởi động lại...');
