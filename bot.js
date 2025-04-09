@@ -170,17 +170,17 @@ bot.onText(/\/interface-status/, (msg) => {
 });
 
 bot.onText(/\/updatecode/, (msg) => {
-  if (msg.chat.id == 5865055827) {  // Chỉ người dùng với ID này mới được sử dụng lệnh
-    const exec = require('child_process').exec;
-    exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err, stdout, stderr) => {
-      if (err) {
-        bot.sendMessage(msg.chat.id, 'Lỗi khi cập nhật bot.');
-        console.error(err);
-      } else {
-        bot.sendMessage(msg.chat.id, 'Bot đã được cập nhật và khởi động lại.');
-      }
-    });
-  } else {
-    bot.sendMessage(msg.chat.id, 'Bạn không có quyền truy cập vào lệnh này.');
+  if (msg.from.id !== allowedUserId) {
+    return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
   }
+
+  const exec = require('child_process').exec;
+  exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err, stdout, stderr) => {
+    if (err) {
+      bot.sendMessage(msg.chat.id, 'Loi khi cap nhat bot.');
+      console.error(err);
+    } else {
+      bot.sendMessage(msg.chat.id, 'Bot da duoc cap nhat va khoi dong lai.');
+    }
+  });
 });
