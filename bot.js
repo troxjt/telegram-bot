@@ -53,10 +53,10 @@ bot.onText(/\/menu/, (msg) => {
       inline_keyboard: [
         [{ text: 'Thông tin hệ thống', callback_data: 'get_system_info' }],
         [{ text: 'Danh sách kết nối', callback_data: 'list_connections' }],
-        [{ text: 'Khởi động lại router', callback_data: 'reboot_router' }],
         [{ text: 'Kiểm tra băng thông', callback_data: 'check_bandwidth' }],
         [{ text: 'Trạng thái giao diện', callback_data: 'interface-status' }],
-        [{ text: 'Update code bot', callback_data: 'update_code_bot' }]
+        [{ text: 'Update code bot', callback_data: 'update_code_bot' }],
+        [{ text: 'Khởi động lại router', callback_data: 'reboot_router' }],
       ]
     }
   };
@@ -68,11 +68,7 @@ bot.onText(/\/menu/, (msg) => {
 bot.on('callback_query', (callbackQuery) => {
   const msg = callbackQuery.message;
   const data = callbackQuery.data;
-
   if (data === 'get_system_info') {
-    // Gọi hàm lấy thông tin hệ thống
-    bot.sendMessage(msg.chat.id, 'Đang lấy thông tin hệ thống...');
-    // Lenh de lay thông tin trạng thái cua router
     router.write('/system/resource/print')
       .then((result) => {
         const status = result[0];
@@ -112,10 +108,6 @@ bot.on('callback_query', (callbackQuery) => {
         console.error(err);
       });
   } else if (data === 'list_connections') {
-    // Gọi hàm lấy danh sách kết nối
-    bot.sendMessage(msg.chat.id, 'Đang lấy danh sách kết nối...');
-
-    // Lenh de lay danh sach kết nối hien tai
     router.write('/ip/arp/print')
       .then((result) => {
         if (result.length > 0) {
@@ -132,22 +124,7 @@ bot.on('callback_query', (callbackQuery) => {
         bot.sendMessage(msg.chat.id, 'Lỗi khi lấy danh sach kết nối.');
         console.error(err);
       });
-  } else if (data === 'reboot_router') {
-    // Gọi hàm khởi động lại router
-    bot.sendMessage(msg.chat.id, 'Đang khởi động lại router...');
-    // Lenh de reboot RouterOS
-    router.write('/system/reboot')
-      .then((result) => {
-        bot.sendMessage(msg.chat.id, 'RouterOS đang khởi động lại...');
-      })
-      .catch((err) => {
-        bot.sendMessage(msg.chat.id, 'Lỗi khi khởi động lại router.');
-        console.error(err);
-      });
   } else if (data === 'check_bandwidth') {
-    // Gọi hàm kiểm tra băng thông
-    bot.sendMessage(msg.chat.id, 'Đang kiểm tra băng thông...');
-    // Lenh de lay thông tin bang thong
     router.write('/interface/ethernet/print')
       .then((result) => {
         let statsMsg = 'THÔNG TIN BĂNG THÔNG:\n';
@@ -161,8 +138,6 @@ bot.on('callback_query', (callbackQuery) => {
         console.error(err);
       });
   } else if (data === 'interface-status') {
-    // Gọi hàm kiểm tra trạng thái giao diện mạng
-    bot.sendMessage(msg.chat.id, 'Đang kiểm tra trạng thái giao diện mạng...');
     router.write('/interface/print')
     .then((result) => {
       let interfacesStatus = 'TRẠNG THÁI GIAO DIỆN:\n';
@@ -176,8 +151,6 @@ bot.on('callback_query', (callbackQuery) => {
       console.error(err);
     });
   } else if (data === 'update_code_bot') {
-    // Gọi hàm update bot
-    bot.sendMessage(msg.chat.id, 'Đang update bot...');
     const exec = require('child_process').exec;
     exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err, stdout, stderr) => {
       if (err) {
@@ -187,5 +160,14 @@ bot.on('callback_query', (callbackQuery) => {
         bot.sendMessage(msg.chat.id, 'Bot đã được cập nhật và khởi động lại.');
       }
     });
+  } else if (data === 'reboot_router') {
+    router.write('/system/reboot')
+      .then((result) => {
+        bot.sendMessage(msg.chat.id, 'RouterOS đang khởi động lại...');
+      })
+      .catch((err) => {
+        bot.sendMessage(msg.chat.id, 'Lỗi khi khởi động lại router.');
+        console.error(err);
+      });
   }
 });
