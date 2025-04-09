@@ -14,7 +14,7 @@ const routerPassword = 'Trox071299@@';  // Mat khau RouterOS
 // Tao bot Telegram
 const bot = new TelegramBot(token, { polling: true });
 
-// ID ngu?i dùng du?c phép s? d?ng bot
+// ID ngu?i dï¿½ng du?c phï¿½p s? d?ng bot
 const allowedUserId = 5865055827;
 
 // Ket noi voi RouterOS API
@@ -59,7 +59,7 @@ bot.onText(/\/reboot/, (msg) => {
     });
 });
 
-bot.onText(/\/get-status/, (msg) => {
+bot.onText(/\/trangthai/, (msg) => {
   if (msg.from.id !== allowedUserId) {
     return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
   }
@@ -105,7 +105,7 @@ bot.onText(/\/get-status/, (msg) => {
     });
 });
 
-bot.onText(/\/list-connections/, (msg) => {
+bot.onText(/\/ketnoi/, (msg) => {
   if (msg.from.id !== allowedUserId) {
     return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
   }
@@ -129,7 +129,7 @@ bot.onText(/\/list-connections/, (msg) => {
     });
 });
 
-bot.onText(/\/bandwidth-stats/, (msg) => {
+bot.onText(/\/bangthong/, (msg) => {
   if (msg.from.id !== allowedUserId) {
     return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
   }
