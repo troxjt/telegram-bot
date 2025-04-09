@@ -5,7 +5,7 @@ const { RouterOSAPI } = require('node-routeros');
 const token = '7703387581:AAFbcNP5TzESZwh09kiqetIsczbqn6ybPSY';  // Thay token bot cua ban vao day
 const chatId = '-1002545905741';  // Thay chatId cua ban vao day
 
-// Thong tin ket noi RouterOS
+// Thong tin kết nối RouterOS
 const routerIp = '192.168.123.1'; // Dia chi IP cua router
 const routerPort = 8728;          // Cong API mac dinh
 const routerUser = 'troxjt';      // Ten nguoi dung RouterOS
@@ -28,10 +28,10 @@ const router = new RouterOSAPI({
 
 router.connect()
   .then(() => {
-    console.log('Da ket noi den RouterOS');
+    console.log('Da kết nối den RouterOS');
   })
   .catch((err) => {
-    console.error('Khong the ket noi den RouterOS:', err);
+    console.error('Khong the kết nối den RouterOS:', err);
   });
 
 // Lang nghe cac lenh tu nguoi dung
@@ -72,64 +72,64 @@ bot.on('callback_query', (callbackQuery) => {
   if (data === 'get_system_info') {
     // Gọi hàm lấy thông tin hệ thống
     bot.sendMessage(msg.chat.id, 'Đang lấy thông tin hệ thống...');
-    // Lenh de lay thong tin trang thai cua router
+    // Lenh de lay thông tin trạng thái cua router
     router.write('/system/resource/print')
       .then((result) => {
         const status = result[0];
         
-        // Lay thong tin chi tiet ve CPU, Memory, Uptime, va Version
+        // Lay thông tin chi tiet ve CPU, Memory, Uptime, va Version
         router.write('/system/identity/print')
           .then((identity) => {
             const routerName = identity[0]['name'];
             
-            // Lay thong tin ve License
+            // Lay thông tin ve License
             router.write('/system/license/print')
               .then((license) => {
   
-                // Gui thong tin chi tiet ve trang thai
-                const statusMsg = `Thong tin RouterOS:
-                  - Ten Router: ${routerName}
-                  - Tai CPU: ${status['cpu-load']}%
-                  - Bo nho tu do: ${status['free-memory']} bytes
-                  - Tong bo nho: ${status['total-memory']} bytes
-                  - Thoi gian hoat dong: ${status['uptime']}
-                  - Phien ban RouterOS: ${status['version']}`;
+                // Gui thông tin chi tiet ve trạng thái
+                const statusMsg = `THÔNG TIN PC ROUTER:
+                  - NAME: ${routerName}
+                  - CPU: ${status['cpu-load']}%
+                  - RAM: ${status['free-memory']} bytes
+                  - DISK: ${status['total-memory']} bytes
+                  - UPTIME: ${status['uptime']}
+                  - ROUTEROS: ${status['version']}`;
                   
                 bot.sendMessage(msg.chat.id, statusMsg);
               })
               .catch((err) => {
-                bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin license.');
+                bot.sendMessage(msg.chat.id, 'Lỗi khi lấy thông tin license.');
                 console.error(err);
               });
           })
           .catch((err) => {
-            bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin Router Identity.');
+            bot.sendMessage(msg.chat.id, 'Lỗi khi lấy thông tin Router Identity.');
             console.error(err);
           });
       })
       .catch((err) => {
-        bot.sendMessage(msg.chat.id, 'Loi khi lay trang thai router.');
+        bot.sendMessage(msg.chat.id, 'Lỗi khi lấy trạng thái Router.');
         console.error(err);
       });
   } else if (data === 'list_connections') {
     // Gọi hàm lấy danh sách kết nối
     bot.sendMessage(msg.chat.id, 'Đang lấy danh sách kết nối...');
 
-    // Lenh de lay danh sach ket noi hien tai
+    // Lenh de lay danh sach kết nối hien tai
     router.write('/ip/arp/print')
       .then((result) => {
         if (result.length > 0) {
-          let connections = 'Danh sach ket noi:\n';
+          let connections = 'Danh sách kết nối:\n';
           result.forEach((conn) => {
             connections += `IP: ${conn['address']}, MAC: ${conn['mac-address']}\n`;
           });
           bot.sendMessage(msg.chat.id, connections);
         } else {
-          bot.sendMessage(msg.chat.id, 'Khong co ket noi nao hien tai.');
+          bot.sendMessage(msg.chat.id, 'Không có kết nối nào hiện tại.');
         }
       })
       .catch((err) => {
-        bot.sendMessage(msg.chat.id, 'Loi khi lay danh sach ket noi.');
+        bot.sendMessage(msg.chat.id, 'Lỗi khi lấy danh sach kết nối.');
         console.error(err);
       });
   } else if (data === 'reboot_router') {
@@ -138,26 +138,26 @@ bot.on('callback_query', (callbackQuery) => {
     // Lenh de reboot RouterOS
     router.write('/system/reboot')
       .then((result) => {
-        bot.sendMessage(msg.chat.id, 'RouterOS dang khoi dong lai...');
+        bot.sendMessage(msg.chat.id, 'RouterOS đang khởi động lại...');
       })
       .catch((err) => {
-        bot.sendMessage(msg.chat.id, 'Loi khi khoi dong lai router.');
+        bot.sendMessage(msg.chat.id, 'Lỗi khi khởi động lại router.');
         console.error(err);
       });
   } else if (data === 'check_bandwidth') {
     // Gọi hàm kiểm tra băng thông
     bot.sendMessage(msg.chat.id, 'Đang kiểm tra băng thông...');
-    // Lenh de lay thong tin bang thong
+    // Lenh de lay thông tin bang thong
     router.write('/interface/ethernet/print')
       .then((result) => {
-        let statsMsg = 'Thong tin bang thong:\n';
+        let statsMsg = 'THÔNG TIN BĂNG THÔNG:\n';
         result.forEach((interfaceInfo) => {
-          statsMsg += `Ten: ${interfaceInfo['name']}, Luu luong: ${interfaceInfo['rx-byte'] / 1024 / 1024} MB/ ${interfaceInfo['tx-byte'] / 1024 / 1024} MB\n`;
+          statsMsg += `Tên: ${interfaceInfo['name']}, Lưu lượng: ${interfaceInfo['rx-byte'] / 1024 / 1024} MB/ ${interfaceInfo['tx-byte'] / 1024 / 1024} MB\n`;
         });
         bot.sendMessage(msg.chat.id, statsMsg);
       })
       .catch((err) => {
-        bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin bang thong.');
+        bot.sendMessage(msg.chat.id, 'Lỗi khi lấy thông tin băng thông.');
         console.error(err);
       });
   } else if (data === 'interface-status') {
@@ -165,14 +165,14 @@ bot.on('callback_query', (callbackQuery) => {
     bot.sendMessage(msg.chat.id, 'Đang kiểm tra trạng thái giao diện mạng...');
     router.write('/interface/print')
     .then((result) => {
-      let interfacesStatus = 'Trang thai giao dien:\n';
+      let interfacesStatus = 'TRẠNG THÁI GIAO DIỆN:\n';
       result.forEach((interfaceInfo) => {
-        interfacesStatus += `Giao dien: ${interfaceInfo['name']}, Trang thai: ${interfaceInfo['running'] ? 'Hoat dong' : 'Dung'}\n`;
+        interfacesStatus += `Giao diện: ${interfaceInfo['name']}, Trạng thái: ${interfaceInfo['running'] ? 'Hoạt động' : 'Dùng'}\n`;
       });
       bot.sendMessage(msg.chat.id, interfacesStatus);
     })
     .catch((err) => {
-      bot.sendMessage(msg.chat.id, 'Loi khi lay trang thai giao dien.');
+      bot.sendMessage(msg.chat.id, 'Lỗi khi lấy trạng thái giao diện.');
       console.error(err);
     });
   } else if (data === 'update_code_bot') {
@@ -181,10 +181,10 @@ bot.on('callback_query', (callbackQuery) => {
     const exec = require('child_process').exec;
     exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err, stdout, stderr) => {
       if (err) {
-        bot.sendMessage(msg.chat.id, 'Loi khi cap nhat bot.');
+        bot.sendMessage(msg.chat.id, 'Lỗi khi cập nhật bot.');
         console.error(err);
       } else {
-        bot.sendMessage(msg.chat.id, 'Bot da duoc cap nhat va khoi dong lai.');
+        bot.sendMessage(msg.chat.id, 'Bot đã được cập nhật và khởi động lại.');
       }
     });
   }
