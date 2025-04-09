@@ -56,7 +56,7 @@ bot.onText(/\/menu/, (msg) => {
         [{ text: 'Kiểm tra băng thông', callback_data: 'check_bandwidth' }],
         [{ text: 'Trạng thái giao diện', callback_data: 'interface-status' }],
         [{ text: 'Update code bot', callback_data: 'update_code_bot' }],
-        [{ text: 'Khởi động lại router', callback_data: 'reboot_router' }],
+        [{ text: 'Khởi động lại router', callback_data: 'reboot_router' }]
       ]
     }
   };
