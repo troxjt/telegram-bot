@@ -169,7 +169,7 @@ bot.onText(/\/interface-status/, (msg) => {
     });
 });
 
-bot.onText(/\/updatecode/, (msg) => {
+bot.onText(/\/update/, (msg) => {
   if (msg.from.id !== allowedUserId) {
     return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
   }
