@@ -172,7 +172,7 @@ bot.onText(/\/interface-status/, (msg) => {
 bot.onText(/\/updatecode/, (msg) => {
   if (msg.chat.id == 5865055827) {  // Chỉ người dùng với ID này mới được sử dụng lệnh
     const exec = require('child_process').exec;
-    exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart bot', (err, stdout, stderr) => {
+    exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err, stdout, stderr) => {
       if (err) {
         bot.sendMessage(msg.chat.id, 'Lỗi khi cập nhật bot.');
         console.error(err);
