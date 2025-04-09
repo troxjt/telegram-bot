@@ -165,12 +165,20 @@ const handleBandwidth = async (chatId) => {
   try {
     const interfaces = await router.write('/interface/ethernet/print');
     let message = '📡 *BĂNG THÔNG HIỆN TẠI:*\n\n';
+
     interfaces.forEach((iface) => {
-      message += `🔸 ${iface.name}: ⬇️ ${(iface['rx-byte']/1048576).toFixed(2)} MB / ⬆️ ${(iface['tx-byte']/1048576).toFixed(2)} MB\n`;
+      const rx = parseInt(iface['rx-byte']) || 0;
+      const tx = parseInt(iface['tx-byte']) || 0;
+      const rxMB = (rx / 1048576).toFixed(2); // 1024 * 1024
+      const txMB = (tx / 1048576).toFixed(2);
+
+      message += `🔸 *${iface.name}*\n  ↘️ RX: ${rxMB} MB\n  ↗️ TX: ${txMB} MB\n\n`;
     });
+
     bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
     bot.sendMessage(chatId, '❌ Lỗi khi lấy thông tin băng thông.');
+    console.error(err);
   }
 };
 
