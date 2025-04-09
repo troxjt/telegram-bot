@@ -14,7 +14,7 @@ const routerPassword = 'Trox071299@@';  // Mat khau RouterOS
 // Tao bot Telegram
 const bot = new TelegramBot(token, { polling: true });
 
-// ID ngu?i d�ng du?c ph�p s? d?ng bot
+// ID nguoi dung duoc phep su dung bot
 const allowedUserId = 5865055827;
 
 // Ket noi voi RouterOS API
@@ -183,4 +183,133 @@ bot.onText(/\/update/, (msg) => {
       bot.sendMessage(msg.chat.id, 'Bot da duoc cap nhat va khoi dong lai.');
     }
   });
+});
+
+bot.onText(/\/menu/, (msg) => {
+  const options = {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: 'Thông tin hệ thống', callback_data: 'get_system_info' }],
+        [{ text: 'Danh sách kết nối', callback_data: 'list_connections' }],
+        [{ text: 'Khởi động lại router', callback_data: 'reboot_router' }],
+        [{ text: 'Kiểm tra băng thông', callback_data: 'check_bandwidth' }]
+      ]
+    }
+  };
+
+  bot.sendMessage(msg.chat.id, 'Chọn một tùy chọn từ menu:', options);
+});
+
+// Lắng nghe khi người dùng nhấn vào nút trong menu
+bot.on('callback_query', (callbackQuery) => {
+  const msg = callbackQuery.message;
+  const data = callbackQuery.data;
+
+  if (data === 'get_system_info') {
+    // Gọi hàm lấy thông tin hệ thống
+    bot.sendMessage(msg.chat.id, 'Đang lấy thông tin hệ thống...');
+    if (msg.from.id !== allowedUserId) {
+      return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
+    }
+  
+    // Lenh de lay thong tin trang thai cua router
+    router.write('/system/resource/print')
+      .then((result) => {
+        const status = result[0];
+        
+        // Lay thong tin chi tiet ve CPU, Memory, Uptime, va Version
+        router.write('/system/identity/print')
+          .then((identity) => {
+            const routerName = identity[0]['name'];
+            
+            // Lay thong tin ve License
+            router.write('/system/license/print')
+              .then((license) => {
+  
+                // Gui thong tin chi tiet ve trang thai
+                const statusMsg = `Thong tin RouterOS:
+                  - Ten Router: ${routerName}
+                  - Tai CPU: ${status['cpu-load']}%
+                  - Bo nho tu do: ${status['free-memory']} bytes
+                  - Tong bo nho: ${status['total-memory']} bytes
+                  - Thoi gian hoat dong: ${status['uptime']}
+                  - Phien ban RouterOS: ${status['version']}`;
+                  
+                bot.sendMessage(msg.chat.id, statusMsg);
+              })
+              .catch((err) => {
+                bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin license.');
+                console.error(err);
+              });
+          })
+          .catch((err) => {
+            bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin Router Identity.');
+            console.error(err);
+          });
+      })
+      .catch((err) => {
+        bot.sendMessage(msg.chat.id, 'Loi khi lay trang thai router.');
+        console.error(err);
+      });
+  } else if (data === 'list_connections') {
+    // Gọi hàm lấy danh sách kết nối
+    bot.sendMessage(msg.chat.id, 'Đang lấy danh sách kết nối...');
+    if (msg.from.id !== allowedUserId) {
+      return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
+    }
+  
+    // Lenh de lay danh sach ket noi hien tai
+    router.write('/ip/arp/print')
+      .then((result) => {
+        if (result.length > 0) {
+          let connections = 'Danh sach ket noi:\n';
+          result.forEach((conn) => {
+            connections += `IP: ${conn['address']}, MAC: ${conn['mac-address']}\n`;
+          });
+          bot.sendMessage(msg.chat.id, connections);
+        } else {
+          bot.sendMessage(msg.chat.id, 'Khong co ket noi nao hien tai.');
+        }
+      })
+      .catch((err) => {
+        bot.sendMessage(msg.chat.id, 'Loi khi lay danh sach ket noi.');
+        console.error(err);
+      });
+  } else if (data === 'reboot_router') {
+    // Gọi hàm khởi động lại router
+    bot.sendMessage(msg.chat.id, 'Đang khởi động lại router...');
+    if (msg.from.id !== allowedUserId) {
+      return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
+    }
+  
+    // Lenh de reboot RouterOS
+    router.write('/system/reboot')
+      .then((result) => {
+        bot.sendMessage(msg.chat.id, 'RouterOS dang khoi dong lai...');
+      })
+      .catch((err) => {
+        bot.sendMessage(msg.chat.id, 'Loi khi khoi dong lai router.');
+        console.error(err);
+      });
+  } else if (data === 'check_bandwidth') {
+    // Gọi hàm kiểm tra băng thông
+    bot.sendMessage(msg.chat.id, 'Đang kiểm tra băng thông...');
+    if (msg.from.id !== allowedUserId) {
+      return bot.sendMessage(msg.chat.id, 'Ban khong co quyen su dung bot nay.');
+    }
+  
+    // Lenh de lay thong tin bang thong
+    router.write('/interface/ethernet/print')
+      .then((result) => {
+        let statsMsg = 'Thong tin bang thong:\n';
+        result.forEach((interfaceInfo) => {
+          statsMsg += `Ten: ${interfaceInfo['name']}, Luu luong: ${interfaceInfo['rx-byte'] / 1024 / 1024} MB/ ${interfaceInfo['tx-byte'] / 1024 / 1024} MB\n`;
+        });
+        bot.sendMessage(msg.chat.id, statsMsg);
+      })
+      .catch((err) => {
+        bot.sendMessage(msg.chat.id, 'Loi khi lay thong tin bang thong.');
+        console.error(err);
+      });
+  }
 });
