@@ -250,9 +250,16 @@ const handleBlacklist = async (chatId) => {
 };
 
 const askForIPBlock = (chatId) => {
-  bot.sendMessage(chatId, '📥 Nhập IP bạn muốn chặn:');
-  bot.once('message', async (msg) => {
+  sendAndDeleteMessage(chatId, '📥 Nhập IP bạn muốn chặn:');
+  const ipListener = async (msg) => {
     const ip = msg.text.trim();
+    const ipRegex = /^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$/;
+
+    if (!ipRegex.test(ip)) {
+      sendAndDeleteMessage(chatId, '❌ Địa chỉ IP không hợp lệ. Vui lòng thử lại.');
+      return;
+    }
+
     try {
       await router.write('/ip/firewall/address-list/add', [
         { list: 'blacklist', address: ip, comment: 'Blocked by Telegram bot' }
@@ -261,7 +268,9 @@ const askForIPBlock = (chatId) => {
     } catch (err) {
       sendAndDeleteMessage(chatId, '❌ Lỗi khi chặn IP.');
     }
-  });
+  };
+
+  bot.once('message', ipListener);
 };
 
 const findRuleIdByComment = async (commentText) => {
