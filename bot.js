@@ -188,8 +188,9 @@ const handleBlacklist = async (chatId) => {
     try {
       const entries = await router.write('/ip/firewall/address-list/print', [`?list=${list}`]);
       message += `📂 *${list.toUpperCase()}* (${entries.length} mục):\n`;
-      if (entries.length === 0) message += '_Không có địa chỉ nào._\n\n';
-      else {
+      if (entries.length === 0) {
+        message += '_Không có địa chỉ nào._\n\n';
+      } else {
         entries.forEach((e, i) => {
           const comment = e.comment ? `(${e.comment})` : '';
           message += ` ${i + 1}. ${e.address} ${comment}\n`;
@@ -197,12 +198,20 @@ const handleBlacklist = async (chatId) => {
         message += '\n';
       }
     } catch (err) {
+      console.error(`❌ Lỗi khi lấy danh sách ${list}:`, err);
       message += `⚠️ Lỗi khi lấy danh sách ${list}: ${err.message}\n\n`;
     }
   }
 
-  const chunks = message.match(/([\s\S]{1,3500})/g);
-  chunks.forEach(chunk => bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' }));
+  // Chia nhỏ tin nhắn nếu vượt quá giới hạn Telegram
+  const chunks = message.match(/([\s\S]{1,3500})/g) || []; // Chia nhỏ tin nhắn
+  if (chunks.length === 0) {
+    bot.sendMessage(chatId, '❌ Không thể lấy danh sách blacklist.');
+  } else {
+    for (const chunk of chunks) {
+      await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
+    }
+  }
 };
 
 const execUpdate = (chatId) => {
