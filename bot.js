@@ -28,13 +28,29 @@ router.connect()
   .catch(err => console.error('❌ Lỗi kết nối RouterOS:', err));
 
 // ==========================
+// 🛠️ HÀM TIỆN ÍCH
+// ==========================
+const sendAndDeleteMessage = async (chatId, text, options = {}) => {
+  try {
+    const sentMessage = await bot.sendMessage(chatId, text, options);
+    setTimeout(() => {
+      bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
+        console.error('❌ Lỗi khi xóa tin nhắn:', err);
+      });
+    }, 15000); // 15 giây
+  } catch (err) {
+    console.error('❌ Lỗi khi gửi tin nhắn:', err);
+  }
+};
+
+// ==========================
 // 📥 MENU & LỆNH CƠ BẢN
 // ==========================
 bot.onText(/\/start/, (msg) => {
   if (msg.from.id !== CONFIG.telegram.allowedUserId)
-    return bot.sendMessage(msg.chat.id, '🚫 Bạn không có quyền sử dụng bot này.');
+    return sendAndDeleteMessage(msg.chat.id, '🚫 Bạn không có quyền sử dụng bot này.');
 
-  bot.sendMessage(msg.chat.id, '🎮 *Chào bạn!* Dùng menu để điều khiển Router:', {
+  sendAndDeleteMessage(msg.chat.id, '🎮 *Chào bạn!* Dùng menu để điều khiển Router:', {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
@@ -60,7 +76,7 @@ const showMenu = (chatId) => {
       ]
     }
   };
-  bot.sendMessage(chatId, '📲 *Chọn một tùy chọn từ menu:*', { parse_mode: 'Markdown', ...options });
+  sendAndDeleteMessage(chatId, '📲 *Chọn một tùy chọn từ menu:*', { parse_mode: 'Markdown', ...options });
 };
 
 // ==========================
@@ -71,37 +87,30 @@ bot.on('callback_query', async (cbq) => {
   const action = cbq.data;
 
   try {
+    await bot.answerCallbackQuery(cbq.id);
     switch (action) {
       case 'menu':
-        await bot.answerCallbackQuery(cbq.id);
         return showMenu(chatId);
       case 'get_system_info':
-        await bot.answerCallbackQuery(cbq.id);
         return handleSystemInfo(chatId);
       case 'list_connections':
-        await bot.answerCallbackQuery(cbq.id);
         return handleListConnections(chatId);
       case 'check_bandwidth':
-        await bot.answerCallbackQuery(cbq.id);
         return handleBandwidth(chatId);
       case 'interface_status':
-        await bot.answerCallbackQuery(cbq.id);
         return handleInterfaceStatus(chatId);
       case 'show_blacklist':
-        await bot.answerCallbackQuery(cbq.id);
         return handleBlacklist(chatId);
       case 'update_code_bot':
-        await bot.answerCallbackQuery(cbq.id);
         return execUpdate(chatId);
       case 'reboot_router':
-        await bot.answerCallbackQuery(cbq.id);
         return rebootRouter(chatId);
       default:
-        await bot.answerCallbackQuery(cbq.id, { text: '❌ Lệnh không hợp lệ.' });
+        return sendAndDeleteMessage(chatId, '❌ Lệnh không hợp lệ.');
     }
   } catch (err) {
     console.error('❌ Lỗi xử lý callback:', err);
-    await bot.answerCallbackQuery(cbq.id, { text: '❌ Đã xảy ra lỗi khi xử lý yêu cầu.' });
+    sendAndDeleteMessage(chatId, '❌ Đã xảy ra lỗi khi xử lý yêu cầu.');
   }
 });
 
@@ -127,9 +136,9 @@ const handleSystemInfo = async (chatId) => {
 ⏱️ *UPTIME*: ${status['uptime']}
 🛠️ *ROUTEROS*: ${status['version']}`;
 
-    bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
-    bot.sendMessage(chatId, '❌ Lỗi khi lấy thông tin hệ thống.');
+    sendAndDeleteMessage(chatId, '❌ Lỗi khi lấy thông tin hệ thống.');
   }
 };
 
@@ -140,9 +149,9 @@ const handleListConnections = async (chatId) => {
     result.forEach((c, i) => {
       message += `🔹 ${i + 1}. IP: ${c.address}, MAC: ${c['mac-address']}\n`;
     });
-    bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
-    bot.sendMessage(chatId, '❌ Lỗi khi lấy danh sách kết nối.');
+    sendAndDeleteMessage(chatId, '❌ Lỗi khi lấy danh sách kết nối.');
   }
 };
 
@@ -160,9 +169,9 @@ const handleBandwidth = async (chatId) => {
       message += `🔸 *${iface.name}*\n  ↘️ RX: ${rxMB} MB\n  ↗️ TX: ${txMB} MB\n\n`;
     });
 
-    bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
-    bot.sendMessage(chatId, '❌ Lỗi khi lấy thông tin băng thông.');
+    sendAndDeleteMessage(chatId, '❌ Lỗi khi lấy thông tin băng thông.');
     console.error(err);
   }
 };
@@ -174,9 +183,9 @@ const handleInterfaceStatus = async (chatId) => {
     result.forEach((iface) => {
       message += `🔸 ${iface.name}: ${iface.running ? '✅ *Hoạt động*' : '❌ *Dừng*'}\n`;
     });
-    bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+    sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
-    bot.sendMessage(chatId, '❌ Lỗi khi lấy trạng thái giao diện.');
+    sendAndDeleteMessage(chatId, '❌ Lỗi khi lấy trạng thái giao diện.');
   }
 };
 
@@ -185,15 +194,13 @@ const handleBlacklist = async (chatId) => {
   let message = '📛 *DANH SÁCH ĐỊA CHỈ BỊ CHẶN:*\n\n';
 
   try {
-    // Lấy toàn bộ danh sách IP bị chặn
     const allEntries = await router.write('/ip/firewall/address-list/print');
 
     if (!Array.isArray(allEntries) || allEntries.length === 0) {
-      bot.sendMessage(chatId, '✅ Không có địa chỉ nào đang bị chặn.');
+      sendAndDeleteMessage(chatId, '✅ Không có địa chỉ nào đang bị chặn.');
       return;
     }
 
-    // Lọc thủ công theo từng danh sách
     for (const list of lists) {
       const filtered = allEntries.filter((e) => e.list === list);
 
@@ -210,30 +217,29 @@ const handleBlacklist = async (chatId) => {
       message += '\n';
     }
 
-    // Gửi kết quả, tách nếu quá dài
     const chunks = message.match(/([\s\S]{1,3500})/g) || [];
     for (const chunk of chunks) {
-      await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
+      await sendAndDeleteMessage(chatId, chunk, { parse_mode: 'Markdown' });
     }
 
   } catch (err) {
     console.error(`❌ Lỗi khi lấy danh sách address-list:`, err);
-    bot.sendMessage(chatId, '❌ Lỗi khi lấy danh sách blacklist.');
+    sendAndDeleteMessage(chatId, '❌ Lỗi khi lấy danh sách blacklist.');
   }
 };
 
 const execUpdate = (chatId) => {
   exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err) => {
-    if (err) bot.sendMessage(chatId, '❌ Lỗi khi cập nhật bot.');
-    else bot.sendMessage(chatId, '✅ Bot đã được cập nhật và khởi động lại.');
+    if (err) sendAndDeleteMessage(chatId, '❌ Lỗi khi cập nhật bot.');
+    else sendAndDeleteMessage(chatId, '✅ Bot đã được cập nhật và khởi động lại.');
   });
 };
 
 const rebootRouter = async (chatId) => {
   try {
     await router.write('/system/reboot');
-    bot.sendMessage(chatId, '🔁 RouterOS đang khởi động lại...');
+    sendAndDeleteMessage(chatId, '🔁 RouterOS đang khởi động lại...');
   } catch (err) {
-    bot.sendMessage(chatId, '❌ Lỗi khi khởi động lại Router.');
+    sendAndDeleteMessage(chatId, '❌ Lỗi khi khởi động lại Router.');
   }
 };
