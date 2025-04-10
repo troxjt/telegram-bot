@@ -70,23 +70,38 @@ bot.on('callback_query', async (cbq) => {
   const chatId = cbq.message.chat.id;
   const action = cbq.data;
 
-  switch (action) {
-    case 'menu':
-      return showMenu(chatId);
-    case 'get_system_info':
-      return handleSystemInfo(chatId);
-    case 'list_connections':
-      return handleListConnections(chatId);
-    case 'check_bandwidth':
-      return handleBandwidth(chatId);
-    case 'interface_status':
-      return handleInterfaceStatus(chatId);
-    case 'show_blacklist':
-      return handleBlacklist(chatId);
-    case 'update_code_bot':
-      return execUpdate(chatId);
-    case 'reboot_router':
-      return rebootRouter(chatId);
+  try {
+    switch (action) {
+      case 'menu':
+        await bot.answerCallbackQuery(cbq.id);
+        return showMenu(chatId);
+      case 'get_system_info':
+        await bot.answerCallbackQuery(cbq.id);
+        return handleSystemInfo(chatId);
+      case 'list_connections':
+        await bot.answerCallbackQuery(cbq.id);
+        return handleListConnections(chatId);
+      case 'check_bandwidth':
+        await bot.answerCallbackQuery(cbq.id);
+        return handleBandwidth(chatId);
+      case 'interface_status':
+        await bot.answerCallbackQuery(cbq.id);
+        return handleInterfaceStatus(chatId);
+      case 'show_blacklist':
+        await bot.answerCallbackQuery(cbq.id);
+        return handleBlacklist(chatId);
+      case 'update_code_bot':
+        await bot.answerCallbackQuery(cbq.id);
+        return execUpdate(chatId);
+      case 'reboot_router':
+        await bot.answerCallbackQuery(cbq.id);
+        return rebootRouter(chatId);
+      default:
+        await bot.answerCallbackQuery(cbq.id, { text: '❌ Lệnh không hợp lệ.' });
+    }
+  } catch (err) {
+    console.error('❌ Lỗi xử lý callback:', err);
+    await bot.answerCallbackQuery(cbq.id, { text: '❌ Đã xảy ra lỗi khi xử lý yêu cầu.' });
   }
 });
 
