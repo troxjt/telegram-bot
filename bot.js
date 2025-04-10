@@ -66,17 +66,32 @@ const showMenu = (chatId) => {
   const options = {
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🖥️ Thông tin hệ thống', callback_data: 'get_system_info' }],
-        [{ text: '🔌 Danh sách kết nối', callback_data: 'list_connections' }],
-        [{ text: '📶 Kiểm tra băng thông', callback_data: 'check_bandwidth' }],
-        [{ text: '🌐 Trạng thái giao diện', callback_data: 'interface_status' }],
-        [{ text: '📛 Danh sách IP bị chặn', callback_data: 'show_blacklist' }],
-        [{ text: '🧠 Update code bot', callback_data: 'update_code_bot' }],
-        [{ text: '🔁 Khởi động lại router', callback_data: 'reboot_router' }]
+        [
+          { text: '🖥️ Hệ thống', callback_data: 'get_system_info' },
+          { text: '🌐 Giao diện', callback_data: 'interface_status' }
+        ],
+        [
+          { text: '🔌 ARP', callback_data: 'list_connections' },
+          { text: '📶 Băng thông', callback_data: 'check_bandwidth' }
+        ],
+        [
+          { text: '📛 Blacklist', callback_data: 'show_blacklist' },
+          { text: '🚫 Chặn IP', callback_data: 'block_ip_manual' }
+        ],
+        [
+          { text: '🛡️ Bật Phòng thủ', callback_data: 'defense_on' },
+          { text: '🛑 Tắt Phòng thủ', callback_data: 'defense_off' }
+        ],
+        [
+          { text: '🔁 Reboot', callback_data: 'reboot_router' },
+          { text: '🧠 Update Bot', callback_data: 'update_code_bot' }
+        ]
       ]
     }
   };
-  sendAndDeleteMessage(chatId, '📲 *Chọn một tùy chọn từ menu:*', { parse_mode: 'Markdown', ...options });
+
+  const welcome = `📊 *BẢNG ĐIỀU KHIỂN ROUTER*\n\nChọn một chức năng để quản lý hệ thống của bạn:`;
+  bot.sendMessage(chatId, welcome, { parse_mode: 'Markdown', ...options });
 };
 
 // ==========================
@@ -101,6 +116,12 @@ bot.on('callback_query', async (cbq) => {
         return handleInterfaceStatus(chatId);
       case 'show_blacklist':
         return handleBlacklist(chatId);
+      case 'block_ip_manual':
+        return askForIPBlock(chatId);
+      case 'defense_on':
+        return toggleDefense(chatId, true);
+      case 'defense_off':
+        return toggleDefense(chatId, false);
       case 'update_code_bot':
         return execUpdate(chatId);
       case 'reboot_router':
@@ -225,6 +246,49 @@ const handleBlacklist = async (chatId) => {
   } catch (err) {
     console.error(`❌ Lỗi khi lấy danh sách address-list:`, err);
     sendAndDeleteMessage(chatId, '❌ Lỗi khi lấy danh sách blacklist.');
+  }
+};
+
+const askForIPBlock = (chatId) => {
+  bot.sendMessage(chatId, '📥 Nhập IP bạn muốn chặn:');
+  bot.once('message', async (msg) => {
+    const ip = msg.text.trim();
+    try {
+      await router.write('/ip/firewall/address-list/add', [
+        { list: 'blacklist', address: ip, comment: 'Blocked by Telegram bot' }
+      ]);
+      sendAndDeleteMessage(chatId, `🚫 Đã chặn IP: ${ip}`);
+    } catch (err) {
+      sendAndDeleteMessage(chatId, '❌ Lỗi khi chặn IP.');
+    }
+  });
+};
+
+const findRuleIdByComment = async (commentText) => {
+  const rules = await router.write('/ip/firewall/filter/print');
+  const rule = rules.find(r => r.comment && r.comment.includes(commentText));
+  return rule?.['.id'] || null;
+};
+
+const toggleDefense = async (chatId, isOn) => {
+  try {
+    const smartDefenseRuleId = await findRuleIdByComment('Smart Defense - Block IP nghi ngo');
+
+    if (!smartDefenseRuleId) {
+      return sendAndDeleteMessage(chatId, '⚠️ Không tìm thấy rule phòng thủ thông minh.');
+    }
+
+    if (isOn) {
+      await router.write('/ip/firewall/filter/enable', [{ '.id': smartDefenseRuleId }]);
+      return sendAndDeleteMessage(chatId, '🛡️ Đã *bật* chế độ Phòng thủ thông minh.', { parse_mode: 'Markdown' });
+    } else {
+      await router.write('/ip/firewall/filter/disable', [{ '.id': smartDefenseRuleId }]);
+      return sendAndDeleteMessage(chatId, '🛑 Đã *tắt* chế độ Phòng thủ thông minh.', { parse_mode: 'Markdown' });
+    }
+
+  } catch (err) {
+    console.error('❌ Lỗi toggle defense:', err);
+    sendAndDeleteMessage(chatId, '❌ Không thể thay đổi trạng thái phòng thủ.');
   }
 };
 
