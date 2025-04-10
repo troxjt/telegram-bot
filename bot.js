@@ -5,23 +5,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { RouterOSAPI } = require('node-routeros');
 const { exec } = require('child_process');
-
-// ==========================
-// 🔧 CẤU HÌNH HỆ THỐNG
-// ==========================
-const CONFIG = {
-  telegram: {
-    token: '7703387581:AAFbcNP5TzESZwh09kiqetIsczbqn6ybPSY',
-    chatId: '-1002545905741',
-    allowedUserId: 5865055827
-  },
-  router: {
-    host: '192.168.123.1',
-    port: 8728,
-    user: 'troxjt',
-    password: 'Trox071299@@'
-  }
-};
+const CONFIG = require('./config');
 
 // ==========================
 // 🤖 KHỞI TẠO TELEGRAM BOT
@@ -89,33 +73,19 @@ bot.on('callback_query', async (cbq) => {
   switch (action) {
     case 'menu':
       return showMenu(chatId);
-
     case 'get_system_info':
-      bot.sendMessage(chatId, '🖥️ Đang lấy thông tin hệ thống...');
       return handleSystemInfo(chatId);
-
     case 'list_connections':
-      bot.sendMessage(chatId, '🔍 Đang lấy danh sách kết nối...');
       return handleListConnections(chatId);
-
     case 'check_bandwidth':
-      bot.sendMessage(chatId, '📡 Đang kiểm tra băng thông...');
       return handleBandwidth(chatId);
-
     case 'interface_status':
-      bot.sendMessage(chatId, '🌐 Đang kiểm tra trạng thái giao diện...');
       return handleInterfaceStatus(chatId);
-
     case 'show_blacklist':
-      bot.sendMessage(chatId, '📥 Đang lấy danh sách blacklist tổng hợp...');
       return handleBlacklist(chatId);
-
     case 'update_code_bot':
-      bot.sendMessage(chatId, '⚙️ Đang cập nhật code bot...');
       return execUpdate(chatId);
-
     case 'reboot_router':
-      bot.sendMessage(chatId, '⚠️ Chuẩn bị khởi động lại router...');
       return rebootRouter(chatId);
   }
 });
