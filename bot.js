@@ -184,38 +184,41 @@ const handleBlacklist = async (chatId) => {
   const lists = ['blacklist', 'ssh_blacklist', 'ftp_blacklist', 'port_scanners'];
   let message = '📛 *DANH SÁCH ĐỊA CHỈ BỊ CHẶN:*\n\n';
 
-  for (const list of lists) {
-    try {
-      const entries = await router.write('/ip/firewall/address-list/print', [
-        `?list=${list}`
-      ]);
+  try {
+    // Lấy toàn bộ danh sách IP bị chặn
+    const allEntries = await router.write('/ip/firewall/address-list/print');
 
-      // Nếu Mikrotik trả về !empty, ta kiểm tra bằng typeof entries === 'object' && !Array.isArray()
-      if (!Array.isArray(entries) || entries.length === 0 || (entries.length === 1 && entries[0]['!re'] === '!empty')) {
+    if (!Array.isArray(allEntries) || allEntries.length === 0) {
+      bot.sendMessage(chatId, '✅ Không có địa chỉ nào đang bị chặn.');
+      return;
+    }
+
+    // Lọc thủ công theo từng danh sách
+    for (const list of lists) {
+      const filtered = allEntries.filter((e) => e.list === list);
+
+      if (filtered.length === 0) {
         message += `📂 *${list.toUpperCase()}*: _Không có địa chỉ nào._\n\n`;
         continue;
       }
 
-      message += `📂 *${list.toUpperCase()}* (${entries.length} mục):\n`;
-      entries.forEach((e, i) => {
+      message += `📂 *${list.toUpperCase()}* (${filtered.length} mục):\n`;
+      filtered.forEach((e, i) => {
         const comment = e.comment ? `(${e.comment})` : '';
         message += ` ${i + 1}. ${e.address} ${comment}\n`;
       });
       message += '\n';
-    } catch (err) {
-      console.error(`❌ Lỗi khi lấy danh sách ${list}:`, err);
-      message += `⚠️ Lỗi khi lấy danh sách ${list}: ${err.message}\n\n`;
     }
-  }
 
-  // Tách tin nhắn lớn nếu cần
-  const chunks = message.match(/([\s\S]{1,3500})/g) || [];
-  if (chunks.length === 0) {
-    bot.sendMessage(chatId, '❌ Không thể lấy danh sách blacklist.');
-  } else {
+    // Gửi kết quả, tách nếu quá dài
+    const chunks = message.match(/([\s\S]{1,3500})/g) || [];
     for (const chunk of chunks) {
       await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
     }
+
+  } catch (err) {
+    console.error(`❌ Lỗi khi lấy danh sách address-list:`, err);
+    bot.sendMessage(chatId, '❌ Lỗi khi lấy danh sách blacklist.');
   }
 };
 
