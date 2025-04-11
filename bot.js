@@ -79,10 +79,6 @@ const showMenu = (chatId) => {
           { text: '🚫 Chặn IP', callback_data: 'block_ip_manual' }
         ],
         [
-          { text: '🛡️ Bật Phòng thủ', callback_data: 'defense_on' },
-          { text: '🛑 Tắt Phòng thủ', callback_data: 'defense_off' }
-        ],
-        [
           { text: '🔁 Reboot', callback_data: 'reboot_router' },
           { text: '🧠 Update Bot', callback_data: 'update_code_bot' }
         ]
@@ -118,10 +114,12 @@ bot.on('callback_query', async (cbq) => {
         return handleBlacklist(chatId);
       case 'block_ip_manual':
         return askForIPBlock(chatId);
-      case 'defense_on':
-        return toggleDefense(chatId, true);
-      case 'defense_off':
-        return toggleDefense(chatId, false);
+      case 'show_chart':
+        return generateBandwidthChart(chatId);
+      case 'ai_defense_menu':
+        return showAIMenu(chatId);
+      case 'ai_defense_list':
+        return showAIDefenseList(chatId);        
       case 'update_code_bot':
         return execUpdate(chatId);
       case 'reboot_router':
@@ -277,31 +275,73 @@ const askForIPBlock = (chatId) => {
   bot.once('message', ipListener);
 };
 
-const findRuleIdByComment = async (commentText) => {
-  const rules = await router.write('/ip/firewall/filter/print');
-  const rule = rules.find(r => r.comment && r.comment.includes(commentText));
-  return rule?.['.id'] || null;
+const generateBandwidthChart = async (chatId) => {
+  const chartConfig = {
+    type: 'line',
+    data: {
+      labels: ['10:00', '10:05', '10:10'],
+      datasets: [
+        {
+          label: 'Download (Mb/s)',
+          data: [5.2, 4.7, 6.3],
+          borderColor: '#00c0ff',
+          fill: false
+        },
+        {
+          label: 'Upload (Mb/s)',
+          data: [1.2, 1.5, 0.8],
+          borderColor: '#ff4c4c',
+          fill: false
+        }
+      ]
+    },
+    options: {
+      title: { display: true, text: '📡 Băng thông theo thời gian' }
+    }
+  };
+
+  const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
+  bot.sendPhoto(chatId, chartUrl, { caption: '📈 Thống kê băng thông realtime' });
 };
 
-const toggleDefense = async (chatId, isOn) => {
+const showAIMenu = (chatId) => {
+  const options = {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '📛 Danh sách IP bị AI chặn', callback_data: 'ai_defense_list' }
+        ],
+        [
+          { text: '🔙 Quay lại', callback_data: 'menu' }
+        ]
+      ]
+    }
+  };
+
+  bot.sendMessage(chatId, '🧠 *Tường lửa học máy - AI Defense*\n\nChọn chức năng:', {
+    parse_mode: 'Markdown',
+    ...options
+  });
+};
+
+const showAIDefenseList = async (chatId) => {
   try {
-    const smartDefenseRuleId = await findRuleIdByComment('Smart Defense - Block IP nghi ngo');
+    const list = await router.write('/ip/firewall/address-list/print');
+    const smartList = list.filter((e) => e.list === 'smart_defense_list');
 
-    if (!smartDefenseRuleId) {
-      return sendAndDeleteMessage(chatId, '⚠️ Không tìm thấy rule phòng thủ thông minh.');
+    if (smartList.length === 0) {
+      return sendAndDeleteMessage(chatId, '✅ Không có IP nào bị AI chặn.');
     }
 
-    if (isOn) {
-      await router.write('/ip/firewall/filter/enable', [{ '.id': smartDefenseRuleId }]);
-      return sendAndDeleteMessage(chatId, '🛡️ Đã *bật* chế độ Phòng thủ thông minh.', { parse_mode: 'Markdown' });
-    } else {
-      await router.write('/ip/firewall/filter/disable', [{ '.id': smartDefenseRuleId }]);
-      return sendAndDeleteMessage(chatId, '🛑 Đã *tắt* chế độ Phòng thủ thông minh.', { parse_mode: 'Markdown' });
-    }
+    let msg = '🧠 *DANH SÁCH AI BLOCKED:*\n\n';
+    smartList.forEach((e, i) => {
+      msg += `🔹 ${i + 1}. ${e.address} (${e.comment || 'No comment'})\n`;
+    });
+
+    sendAndDeleteMessage(chatId, msg, { parse_mode: 'Markdown' });
 
   } catch (err) {
-    console.error('❌ Lỗi toggle defense:', err);
-    sendAndDeleteMessage(chatId, '❌ Không thể thay đổi trạng thái phòng thủ.');
+    sendAndDeleteMessage(chatId, '❌ Lỗi khi đọc danh sách AI block.');
   }
 };
 
