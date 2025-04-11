@@ -17,7 +17,7 @@ const collectBandwidth = async () => {
     await router.connect();
     const res = await router.write([
       '/interface/monitor-traffic',
-      '=interface=ether4',
+      '=interface=BridgeLAN',
       '=once='
     ]);
     

@@ -336,7 +336,7 @@ const generateBandwidthChart = async (chatId) => {
       ]
     },
     options: {
-      title: { display: true, text: '📡 Băng thông (ether4)' },
+      title: { display: true, text: '📡 Băng thông (BridgeLAN)' },
       scales: {
         yAxes: [{ ticks: { beginAtZero: true } }]
       }
