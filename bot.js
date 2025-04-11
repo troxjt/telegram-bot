@@ -299,7 +299,21 @@ const generateBandwidthChart = async (chatId) => {
     return sendAndDeleteMessage(chatId, '⛔ Chưa có dữ liệu thống kê.');
   }
 
-  const { labels, rx, tx } = JSON.parse(fs.readFileSync(path, 'utf8'));
+  let data = { labels: [], rx: [], tx: [] };
+
+  try {
+    if (fs.existsSync(path)) {
+      const raw = fs.readFileSync(path, 'utf8');
+      if (raw) {
+        data = JSON.parse(raw);
+      }
+    }
+  } catch (err) {
+    console.error('❌ Lỗi đọc dữ liệu bandwidth:', err);
+    return bot.sendMessage(chatId, '⚠️ Không thể đọc dữ liệu biểu đồ. File có thể đang trống hoặc lỗi JSON.');
+  }
+
+  const { labels, rx, tx } = data;
 
   const chartConfig = {
     type: 'line',
