@@ -416,3 +416,13 @@ const rebootRouter = async (chatId) => {
     sendAndDeleteMessage(chatId, '❌ Lỗi khi khởi động lại Router.');
   }
 };
+
+const cron = require('node-cron');
+const { exec } = require('child_process');
+
+cron.schedule('*/5 * * * *', () => {
+  exec('node /home/troxjt/telegram-bot/bandwidthTracker.js', (err, stdout, stderr) => {
+    if (err) console.error('❌ Lỗi khi chạy tracker:', err);
+    else console.log('✅ Đã thu thập dữ liệu băng thông lúc', new Date().toLocaleTimeString());
+  });
+});
