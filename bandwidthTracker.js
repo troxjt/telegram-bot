@@ -15,9 +15,12 @@ const filePath = './data/bandwidth.json';
 const collectBandwidth = async () => {
   try {
     await router.connect();
-    const res = await router.write('/interface/monitor-traffic', [
-      { interface: 'ether4', once: true }
+    const res = await router.write([
+      '/interface/monitor-traffic',
+      '=interface=ether4',
+      '=once='
     ]);
+    
     const now = new Date();
     const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
 
