@@ -5,6 +5,8 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { RouterOSAPI } = require('node-routeros');
 const { exec } = require('child_process');
+const fs = require('fs');
+const path = './data/bandwidth.json';
 const CONFIG = require('./config');
 
 // ==========================
@@ -293,32 +295,41 @@ const askForIPBlock = (chatId) => {
 };
 
 const generateBandwidthChart = async (chatId) => {
+  if (!fs.existsSync(path)) {
+    return bot.sendMessage(chatId, '⛔ Chưa có dữ liệu thống kê.');
+  }
+
+  const { labels, rx, tx } = JSON.parse(fs.readFileSync(path, 'utf8'));
+
   const chartConfig = {
     type: 'line',
     data: {
-      labels: ['10:00', '10:05', '10:10'],
+      labels: labels,
       datasets: [
         {
-          label: 'Download (Mb/s)',
-          data: [5.2, 4.7, 6.3],
+          label: 'Download (Mbps)',
+          data: rx,
           borderColor: '#00c0ff',
           fill: false
         },
         {
-          label: 'Upload (Mb/s)',
-          data: [1.2, 1.5, 0.8],
+          label: 'Upload (Mbps)',
+          data: tx,
           borderColor: '#ff4c4c',
           fill: false
         }
       ]
     },
     options: {
-      title: { display: true, text: '📡 Băng thông theo thời gian' }
+      title: { display: true, text: '📡 Băng thông (ether4)' },
+      scales: {
+        yAxes: [{ ticks: { beginAtZero: true } }]
+      }
     }
   };
 
   const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
-  sendAndDeleteImg(chatId, chartUrl, { caption: '📈 Thống kê băng thông realtime' });
+  await sendAndDeleteImg(chatId, chartUrl, { caption: '📈 Thống kê băng thông' });
 };
 
 const showAIMenu = (chatId) => {
