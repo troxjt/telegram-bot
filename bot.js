@@ -6,6 +6,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { RouterOSAPI } = require('node-routeros');
 const { exec } = require('child_process');
 const fs = require('fs');
+const cron = require('node-cron');
 const path = './data/bandwidth.json';
 const CONFIG = require('./config');
 
@@ -416,9 +417,6 @@ const rebootRouter = async (chatId) => {
     sendAndDeleteMessage(chatId, '❌ Lỗi khi khởi động lại Router.');
   }
 };
-
-const cron = require('node-cron');
-const { exec } = require('child_process');
 
 cron.schedule('*/5 * * * *', () => {
   exec('node /home/troxjt/telegram-bot/bandwidthTracker.js', (err, stdout, stderr) => {
