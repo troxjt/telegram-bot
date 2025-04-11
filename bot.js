@@ -125,7 +125,11 @@ bot.on('callback_query', async (cbq) => {
       case 'update_code_bot':
         return execUpdate(chatId);
       case 'reboot_router':
+        return confirmReboot(chatId);
+      case 'confirm_reboot_yes':
         return rebootRouter(chatId);
+      case 'confirm_reboot_no':
+        return sendAndDeleteMessage(chatId, '🚫 Đã hủy thao tác khởi động lại.');
       default:
         return sendAndDeleteMessage(chatId, '❌ Lệnh không hợp lệ.');
     }
@@ -305,6 +309,20 @@ const execUpdate = (chatId) => {
   exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err) => {
     if (err) sendAndDeleteMessage(chatId, '❌ Lỗi khi cập nhật bot.');
     else sendAndDeleteMessage(chatId, '✅ Bot đã được cập nhật và khởi động lại.');
+  });
+};
+
+const confirmReboot = async (chatId) => {
+  bot.sendMessage(chatId, '⚠️ *Bạn có chắc muốn khởi động lại Router không?*', {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '✅ Có, khởi động lại', callback_data: 'confirm_reboot_yes' },
+          { text: '❌ Không', callback_data: 'confirm_reboot_no' }
+        ]
+      ]
+    }
   });
 };
 
