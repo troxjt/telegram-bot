@@ -43,6 +43,19 @@ const sendAndDeleteMessage = async (chatId, text, options = {}) => {
   }
 };
 
+const sendAndDeleteImg = async (chatId, text, options = {}) => {
+  try {
+    const sentImg = await bot.sendPhoto(chatId, text, options);
+    setTimeout(() => {
+      bot.deleteMessage(chatId, sentImg.message_id).catch((err) => {
+        console.error('❌ Lỗi khi xóa ảnh:', err);
+      });
+    }, 5000); // 15 giây
+  } catch (err) {
+    console.error('❌ Lỗi khi gửi ảnh:', err);
+  }
+};
+
 // ==========================
 // 📥 MENU & LỆNH CƠ BẢN
 // ==========================
@@ -305,7 +318,7 @@ const generateBandwidthChart = async (chatId) => {
   };
 
   const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
-  bot.sendPhoto(chatId, chartUrl, { caption: '📈 Thống kê băng thông realtime' });
+  sendAndDeleteImg(chatId, chartUrl, { caption: '📈 Thống kê băng thông realtime' });
 };
 
 const showAIMenu = (chatId) => {
@@ -322,7 +335,7 @@ const showAIMenu = (chatId) => {
     }
   };
 
-  bot.sendMessage(chatId, '🧠 *Tường lửa học máy - AI Defense*\n\nChọn chức năng:', {
+  sendAndDeleteMessage(chatId, '🧠 *Tường lửa học máy - AI Defense*\n\nChọn chức năng:', {
     parse_mode: 'Markdown',
     ...options
   });
