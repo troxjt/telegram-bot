@@ -40,7 +40,7 @@ const sendAndDeleteMessage = async (chatId, text, options = {}) => {
       bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
         console.error('❌ Lỗi khi xóa tin nhắn:', err);
       });
-    }, 5000); // 15 giây
+    }, 15000); // 15 giây
   } catch (err) {
     console.error('❌ Lỗi khi gửi tin nhắn:', err);
   }
@@ -53,7 +53,7 @@ const sendAndDeleteImg = async (chatId, text, options = {}) => {
       bot.deleteMessage(chatId, sentImg.message_id).catch((err) => {
         console.error('❌ Lỗi khi xóa ảnh:', err);
       });
-    }, 5000); // 15 giây
+    }, 30000); // 15 giây
   } catch (err) {
     console.error('❌ Lỗi khi gửi ảnh:', err);
   }
