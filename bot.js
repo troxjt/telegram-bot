@@ -296,7 +296,7 @@ const askForIPBlock = (chatId) => {
 
 const generateBandwidthChart = async (chatId) => {
   if (!fs.existsSync(path)) {
-    return bot.sendMessage(chatId, '⛔ Chưa có dữ liệu thống kê.');
+    return sendAndDeleteMessage(chatId, '⛔ Chưa có dữ liệu thống kê.');
   }
 
   const { labels, rx, tx } = JSON.parse(fs.readFileSync(path, 'utf8'));
