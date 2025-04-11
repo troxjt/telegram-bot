@@ -313,7 +313,7 @@ const execUpdate = (chatId) => {
 };
 
 const confirmReboot = async (chatId) => {
-  bot.sendMessage(chatId, '⚠️ *Bạn có chắc muốn khởi động lại Router không?*', {
+  sendAndDeleteMessage(chatId, '⚠️ *Bạn có chắc muốn khởi động lại Router không?*', {
     parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
