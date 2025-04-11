@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { RouterOSAPI } = require('node-routeros');
+const CONFIG = require('./config');
 
 const router = new RouterOSAPI({
   host: CONFIG.router.host,
