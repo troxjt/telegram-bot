@@ -79,8 +79,12 @@ const showMenu = (chatId) => {
           { text: '🚫 Chặn IP', callback_data: 'block_ip_manual' }
         ],
         [
-          { text: '🔁 Reboot', callback_data: 'reboot_router' },
-          { text: '🧠 Update Bot', callback_data: 'update_code_bot' }
+          { text: '📊 Biểu đồ mạng', callback_data: 'show_chart' },
+          { text: '🤖 AI Defense', callback_data: 'ai_defense_menu' }
+        ],        
+        [
+          { text: '🧠 Update Bot', callback_data: 'update_code_bot' },
+          { text: '🔁 Reboot', callback_data: 'reboot_router' }
         ]
       ]
     }
