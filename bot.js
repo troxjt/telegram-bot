@@ -7,6 +7,7 @@ const { RouterOSAPI } = require('node-routeros');
 const { exec } = require('child_process');
 const fs = require('fs');
 const cron = require('node-cron');
+const speedTest = require('speedtest-net');
 const path = './data/bandwidth.json';
 const CONFIG = require('./config');
 
@@ -198,39 +199,55 @@ const handleListConnections = async (chatId) => {
   }
 };
 
+const serverList = [
+  { id: 2552, name: 'FPT Hà Nội' },
+  { id: 4468, name: 'FPT Hồ Chí Minh' },
+  { id: 5123, name: 'Viettel Hà Nội' },
+  { id: 11503, name: 'VNPT Hồ Chí Minh' },
+  { id: 17862, name: 'CMC Telecom Hà Nội' }
+];
+
 const handleBandwidth = async (chatId) => {
-  sendAndDeleteMessage(chatId, '📡 *ĐANG ĐO TỐC ĐỘ MẠNG...*', { parse_mode: 'Markdown' });
+  sendAndDeleteMessage(chatId, '📡 *ĐANG ĐO TỐC ĐỘ MẠNG...*\n\n⏳ Thử nhiều máy chủ...', {
+    parse_mode: 'Markdown'
+  });
 
-  exec('speedtest --accept-license --accept-gdpr -f json', (error, stdout, stderr) => {
-    if (error) {
-      console.error('❌ Lỗi:', error);
-      sendAndDeleteMessage(chatId, '❌ Không thể đo tốc độ mạng. Hãy kiểm tra kết nối hoặc proxy.');
-      return;
-    }
-
+  for (const server of serverList) {
     try {
-      const data = JSON.parse(stdout);
+      const test = speedTest({
+        acceptLicense: true,
+        acceptGdpr: true,
+        serverId: server.id,
+      });
+
+      const data = await new Promise((resolve, reject) => {
+        test.on('data', resolve);
+        test.on('error', reject);
+      });
+
       const download = (data.download.bandwidth / 125000).toFixed(2);
       const upload = (data.upload.bandwidth / 125000).toFixed(2);
       const ping = data.ping.latency;
-      const server = data.server.name;
       const location = `${data.server.location}, ${data.server.country}`;
-      const time = new Date().toLocaleString('vi-VN');
+      const timestamp = new Date(data.timestamp).toLocaleString('vi-VN');
 
       const message =
         `📡 *KẾT QUẢ TỐC ĐỘ MẠNG:*\n\n` +
-        `🏢 *Server*: ${server} (${location})\n` +
-        `⏰ *Thời gian*: ${time}\n\n` +
+        `🏢 *Server*: ${server.name} (${location})\n` +
+        `⏰ *Thời gian*: ${timestamp}\n\n` +
         `🔻 *Download*: ${download} Mbps\n` +
         `🔺 *Upload*: ${upload} Mbps\n` +
         `📶 *Ping*: ${ping} ms`;
 
       sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
-    } catch (parseError) {
-      console.error('❌ Lỗi phân tích kết quả:', parseError);
-      sendAndDeleteMessage(chatId, '❌ Lỗi khi phân tích kết quả đo.');
+      return; // Ngừng sau khi đo thành công
+    } catch (err) {
+      console.warn(`⚠️ Không thể đo từ server ${server.name} (${server.id})`);
     }
-  });
+  }
+
+  // Nếu tất cả đều fail
+  sendAndDeleteMessage(chatId, '❌ Không thể đo tốc độ từ bất kỳ server nào. Vui lòng kiểm tra lại kết nối hoặc proxy.');
 };
 
 const handleInterfaceStatus = async (chatId) => {
