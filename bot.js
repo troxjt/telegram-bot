@@ -12,14 +12,8 @@ const axios = require('axios');
 const path = './data/bandwidth.json';
 const CONFIG = require('./config');
 
-// ==========================
-// 🤖 KHỞI TẠO TELEGRAM BOT
-// ==========================
 const bot = new TelegramBot(CONFIG.telegram.token, { polling: true });
 
-// ==========================
-// 🌐 KẾT NỐI ROUTEROS API
-// ==========================
 const router = new RouterOSAPI({
   host: CONFIG.router.host,
   user: CONFIG.router.user,
@@ -32,9 +26,6 @@ router.connect()
   .then(() => console.log('✅ Đã kết nối RouterOS'))
   .catch(err => console.error('❌ Lỗi kết nối RouterOS:', err));
 
-// ==========================
-// 🛠️ HÀM TIỆN ÍCH
-// ==========================
 const sendAndDeleteMessage = async (chatId, text, options = {}) => {
   try {
     const sentMessage = await bot.sendMessage(chatId, text, options);
@@ -61,9 +52,27 @@ const sendAndDeleteImg = async (chatId, text, options = {}) => {
   }
 };
 
-// ==========================
-// 📥 MENU & LỆNH CƠ BẢN
-// ==========================
+const askSpeedtestMode = async (chatId) => {
+  const text = '📶 *Chọn loại đo tốc độ bạn muốn:*';
+  const options = {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '🇻🇳 Đo nội mạng (theo nhà mạng)', callback_data: 'bandwidth_auto_isp' }
+        ],
+        [
+          { text: '🌍 Đo quốc tế (Singapore)', callback_data: 'bandwidth_global' },
+          { text: '🏢 FPT', callback_data: 'bandwidth_local_fpt' },
+          { text: '🏢 Viettel', callback_data: 'bandwidth_local_viettel' },
+          { text: '🏢 VNPT', callback_data: 'bandwidth_local_vnpt' }
+        ]
+      ]
+    }
+  };
+  await bot.sendMessage(chatId, text, options);
+};
+
 bot.onText(/\/start/, (msg) => {
   if (msg.from.id !== CONFIG.telegram.allowedUserId)
     return sendAndDeleteMessage(msg.chat.id, '🚫 Bạn không có quyền sử dụng bot này.');
@@ -99,7 +108,7 @@ const showMenu = (chatId) => {
         [
           { text: '📊 Biểu đồ mạng', callback_data: 'show_chart' },
           { text: '🤖 AI Defense', callback_data: 'ai_defense_menu' }
-        ],        
+        ],
         [
           { text: '🧠 Update Bot', callback_data: 'update_code_bot' },
           { text: '🔁 Reboot', callback_data: 'reboot_router' }
@@ -112,15 +121,18 @@ const showMenu = (chatId) => {
   bot.sendMessage(chatId, welcome, { parse_mode: 'Markdown', ...options });
 };
 
-// ==========================
-// ⚡ XỬ LÝ CALLBACK
-// ==========================
 bot.on('callback_query', async (cbq) => {
   const chatId = cbq.message.chat.id;
   const action = cbq.data;
 
   try {
     await bot.answerCallbackQuery(cbq.id);
+
+    const globalServer = 21541;
+    const fptServer = 4181;
+    const viettelServer = 4062;
+    const vnptServer = 7232;
+
     switch (action) {
       case 'menu':
         return showMenu(chatId);
@@ -129,7 +141,17 @@ bot.on('callback_query', async (cbq) => {
       case 'list_connections':
         return handleListConnections(chatId);
       case 'check_bandwidth':
+        return askSpeedtestMode(chatId);
+      case 'bandwidth_auto_isp':
         return handleBandwidthAutoISP(chatId);
+      case 'bandwidth_global':
+        return handleBandwidth(chatId, globalServer);
+      case 'bandwidth_local_fpt':
+        return handleBandwidth(chatId, fptServer);
+      case 'bandwidth_local_viettel':
+        return handleBandwidth(chatId, viettelServer);
+      case 'bandwidth_local_vnpt':
+        return handleBandwidth(chatId, vnptServer);
       case 'interface_status':
         return handleInterfaceStatus(chatId);
       case 'show_blacklist':
@@ -141,7 +163,7 @@ bot.on('callback_query', async (cbq) => {
       case 'ai_defense_menu':
         return showAIMenu(chatId);
       case 'ai_defense_list':
-        return showAIDefenseList(chatId);        
+        return showAIDefenseList(chatId);
       case 'update_code_bot':
         return execUpdate(chatId);
       case 'reboot_router':
