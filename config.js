@@ -11,5 +11,8 @@ module.exports = {
     port: parseInt(process.env.ROUTER_PORT, 10),
     user: process.env.ROUTER_USER,
     password: process.env.ROUTER_PASSWORD
+  },
+  speedtest: {
+    serverId: process.env.FPT_SERVER_ID
   }
 };

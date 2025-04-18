@@ -201,7 +201,11 @@ const handleListConnections = async (chatId) => {
 
 const handleBandwidth = async (chatId) => {
   try {
-    const test = speedTest({ acceptLicense: true, acceptGdpr: true });
+    const test = speedTest({ 
+      acceptLicense: true, 
+      acceptGdpr: true, 
+      serverId: CONFIG.speedtest.serverId
+    });
 
     let message = '📡 *ĐANG ĐO TỐC ĐỘ MẠNG...*\n\n';
     sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
