@@ -9,6 +9,7 @@ const fs = require('fs');
 const cron = require('node-cron');
 const path = './data/bandwidth.json';
 const CONFIG = require('./config');
+const speedTest = require('speedtest-net');
 
 // ==========================
 // 🤖 KHỞI TẠO TELEGRAM BOT
@@ -200,22 +201,31 @@ const handleListConnections = async (chatId) => {
 
 const handleBandwidth = async (chatId) => {
   try {
-    const interfaces = await router.write('/interface/ethernet/print');
-    let message = '📡 *BĂNG THÔNG HIỆN TẠI:*\n\n';
+    const test = speedTest({ acceptLicense: true, acceptGdpr: true });
 
-    interfaces.forEach((iface) => {
-      const rx = parseInt(iface['rx-byte']) || 0;
-      const tx = parseInt(iface['tx-byte']) || 0;
-      const rxMB = (rx / 1048576).toFixed(2); // 1024 * 1024
-      const txMB = (tx / 1048576).toFixed(2);
+    let message = '📡 *ĐANG ĐO TỐC ĐỘ MẠNG...*\n\n';
+    sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
 
-      message += `🔸 *${iface.name}*\n  ↘️ RX: ${rxMB} MB\n  ↗️ TX: ${txMB} MB\n\n`;
+    test.on('data', (data) => {
+      const downloadSpeed = (data.download.bandwidth / 125000).toFixed(2); // Convert to Mbps
+      const uploadSpeed = (data.upload.bandwidth / 125000).toFixed(2); // Convert to Mbps
+      const ping = data.ping.latency;
+
+      message = `📡 *KẾT QUẢ TỐC ĐỘ MẠNG:*\n\n` +
+                `🔻 *Download*: ${downloadSpeed} Mbps\n` +
+                `🔺 *Upload*: ${uploadSpeed} Mbps\n` +
+                `📶 *Ping*: ${ping} ms\n`;
+
+      sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
     });
 
-    sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
+    test.on('error', (err) => {
+      console.error('❌ Lỗi khi đo tốc độ mạng:', err);
+      sendAndDeleteMessage(chatId, '❌ Lỗi khi đo tốc độ mạng.');
+    });
   } catch (err) {
-    sendAndDeleteMessage(chatId, '❌ Lỗi khi lấy thông tin băng thông.');
-    console.error(err);
+    console.error('❌ Lỗi khi khởi chạy đo tốc độ mạng:', err);
+    sendAndDeleteMessage(chatId, '❌ Lỗi khi khởi chạy đo tốc độ mạng.');
   }
 };
 
@@ -311,7 +321,7 @@ const generateBandwidthChart = async (chatId) => {
     }
   } catch (err) {
     console.error('❌ Lỗi đọc dữ liệu bandwidth:', err);
-    return bot.sendMessage(chatId, '⚠️ Không thể đọc dữ liệu biểu đồ. File có thể đang trống hoặc lỗi JSON.');
+    return sendAndDeleteMessage(chatId, '⚠️ Không thể đọc dữ liệu biểu đồ. File có thể đang trống hoặc lỗi JSON.');
   }
 
   const { labels, rx, tx } = data;
@@ -420,7 +430,8 @@ const rebootRouter = async (chatId) => {
 
 cron.schedule('*/5 * * * *', () => {
   exec('node /home/troxjt/telegram-bot/bandwidthTracker.js', (err, stdout, stderr) => {
-    if (err) console.error('❌ Lỗi khi chạy tracker:', err);
-    else console.log('✅ Đã thu thập dữ liệu băng thông lúc', new Date().toLocaleTimeString());
+    if (err) {
+      console.error('❌ Lỗi khi chạy tracker:', err);
+    };
   });
 });
