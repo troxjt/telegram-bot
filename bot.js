@@ -199,13 +199,41 @@ const handleListConnections = async (chatId) => {
   }
 };
 
-const handleBandwidth = (chatId) => {
-  sendAndDeleteMessage(chatId, '📡 *ĐANG ĐO TỐC ĐỘ MẠNG...*', { parse_mode: 'Markdown' });
+const handleBandwidth = async (chatId) => {
+  const message = await bot.sendMessage(chatId, '📡 *ĐANG CHUẨN BỊ ĐO...*', { parse_mode: 'Markdown' });
 
-  exec('speedtest --accept-license --accept-gdpr -f json', (error, stdout, stderr) => {
+  const steps = [
+    '📡 *ĐANG CHUẨN BỊ ĐO...*',
+    '🌐 *ĐANG CHỌN SERVER...*',
+    '🚀 *ĐANG ĐO DOWNLOAD...*',
+    '🔼 *ĐANG ĐO UPLOAD...*',
+    '📶 *ĐANG ĐO PING...*',
+    '📊 *PHÂN TÍCH KẾT QUẢ...*'
+  ];
+
+  let i = 0;
+
+  const interval = setInterval(() => {
+    if (i < steps.length) {
+      bot.editMessageText(steps[i], {
+        chat_id: chatId,
+        message_id: message.message_id,
+        parse_mode: 'Markdown'
+      });
+      i++;
+    }
+  }, 1500); // thay đổi trạng thái mỗi 1.5 giây (tùy bạn)
+
+  exec('speedtest --accept-license --accept-gdpr -f json', async (error, stdout, stderr) => {
+    clearInterval(interval);
+
     if (error) {
-      console.error(`❌ Lỗi đo tốc độ: ${error.message}`);
-      return sendAndDeleteMessage(chatId, '❌ Lỗi khi đo tốc độ mạng. Vui lòng kiểm tra lại kết nối hoặc firewall.');
+      await bot.editMessageText(`❌ *Lỗi đo tốc độ:* ${error.message}`, {
+        chat_id: chatId,
+        message_id: message.message_id,
+        parse_mode: 'Markdown'
+      });
+      return;
     }
 
     try {
@@ -216,18 +244,25 @@ const handleBandwidth = (chatId) => {
       const server = `${data.server.name}, ${data.server.location}`;
       const timestamp = new Date(data.timestamp).toLocaleString('vi-VN');
 
-      const message =
-        `📡 *KẾT QUẢ TỐC ĐỘ MẠNG:*\n\n` +
+      const result =
+        `✅ *KẾT QUẢ TỐC ĐỘ:*\n\n` +
         `🏢 *Server*: ${server}\n` +
-        `⏰ *Thời gian*: ${timestamp}\n\n` +
+        `🕒 *Thời gian*: ${timestamp}\n\n` +
         `🔻 *Download*: ${download} Mbps\n` +
         `🔺 *Upload*: ${upload} Mbps\n` +
         `📶 *Ping*: ${ping} ms`;
 
-      sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
+      await bot.editMessageText(result, {
+        chat_id: chatId,
+        message_id: message.message_id,
+        parse_mode: 'Markdown'
+      });
     } catch (e) {
-      console.error(`❌ Lỗi parse dữ liệu: ${e.message}`);
-      sendAndDeleteMessage(chatId, '❌ Không thể phân tích kết quả đo tốc độ.');
+      await bot.editMessageText(`❌ *Lỗi phân tích kết quả:* ${e.message}`, {
+        chat_id: chatId,
+        message_id: message.message_id,
+        parse_mode: 'Markdown'
+      });
     }
   });
 };
