@@ -201,34 +201,55 @@ const handleListConnections = async (chatId) => {
 
 const handleBandwidth = async (chatId) => {
   try {
-    const test = speedTest({ 
-      acceptLicense: true, 
-      acceptGdpr: true
-    });
+    const dns = require('dns');
+    const speedTest = require('speedtest-net');
 
-    let message = '📡 *ĐANG ĐO TỐC ĐỘ MẠNG...*\n\n';
-    sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
+    // Bước 1: Kiểm tra DNS để xác định có kết nối Internet không
+    dns.resolve('speedtest.net', (err) => {
+      if (err) {
+        console.error('❌ DNS không phản hồi:', err);
+        sendAndDeleteMessage(chatId, '⚠️ Không thể truy cập speedtest.net. Kiểm tra lại DNS hoặc mạng của bạn.');
+        return;
+      }
 
-    test.on('data', (data) => {
-      const downloadSpeed = (data.download.bandwidth / 125000).toFixed(2); // Convert to Mbps
-      const uploadSpeed = (data.upload.bandwidth / 125000).toFixed(2); // Convert to Mbps
-      const ping = data.ping.latency;
+      // Bước 2: Thông báo đang đo
+      let loadingMsg = '📡 *ĐANG ĐO TỐC ĐỘ MẠNG...*\n\n⏳ Vui lòng chờ trong giây lát...';
+      sendAndDeleteMessage(chatId, loadingMsg, { parse_mode: 'Markdown' });
 
-      message = `📡 *KẾT QUẢ TỐC ĐỘ MẠNG:*\n\n` +
-                `🔻 *Download*: ${downloadSpeed} Mbps\n` +
-                `🔺 *Upload*: ${uploadSpeed} Mbps\n` +
-                `📶 *Ping*: ${ping} ms\n`;
+      // Bước 3: Bắt đầu đo tốc độ mạng với server FPT Hà Nội (ID: 2552)
+      const test = speedTest({
+        acceptLicense: true,
+        acceptGdpr: true,
+        serverId: 2552,
+      });
 
-      sendAndDeleteMessage(chatId, message, { parse_mode: 'Markdown' });
-    });
+      test.on('data', (data) => {
+        const download = (data.download.bandwidth / 125000).toFixed(2); // Mbps
+        const upload = (data.upload.bandwidth / 125000).toFixed(2);     // Mbps
+        const ping = data.ping.latency;
+        const serverName = data.server.name;
+        const location = `${data.server.location}, ${data.server.country}`;
+        const timestamp = new Date(data.timestamp).toLocaleString('vi-VN');
 
-    test.on('error', (err) => {
-      console.error('❌ Lỗi khi đo tốc độ mạng:', err);
-      sendAndDeleteMessage(chatId, '❌ Lỗi khi đo tốc độ mạng.');
+        const resultMsg =
+          `📡 *KẾT QUẢ TỐC ĐỘ MẠNG:*\n\n` +
+          `🏢 *Server*: ${serverName} (${location})\n` +
+          `⏰ *Thời gian*: ${timestamp}\n\n` +
+          `🔻 *Download*: ${download} Mbps\n` +
+          `🔺 *Upload*: ${upload} Mbps\n` +
+          `📶 *Ping*: ${ping} ms`;
+
+        sendAndDeleteMessage(chatId, resultMsg, { parse_mode: 'Markdown' });
+      });
+
+      test.on('error', (err) => {
+        console.error('❌ Lỗi khi đo tốc độ mạng:', err);
+        sendAndDeleteMessage(chatId, '❌ Lỗi khi đo tốc độ mạng. Vui lòng kiểm tra lại kết nối hoặc proxy.');
+      });
     });
   } catch (err) {
-    console.error('❌ Lỗi khi khởi chạy đo tốc độ mạng:', err);
-    sendAndDeleteMessage(chatId, '❌ Lỗi khi khởi chạy đo tốc độ mạng.');
+    console.error('❌ Lỗi hệ thống khi đo tốc độ:', err);
+    sendAndDeleteMessage(chatId, '❌ Đã xảy ra lỗi không mong muốn khi đo tốc độ mạng.');
   }
 };
 
