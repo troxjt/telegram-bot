@@ -12,7 +12,8 @@ module.exports = {
     user: process.env.ROUTER_USER,
     password: process.env.ROUTER_PASSWORD
   },
-  speedtest: {
-    serverId: process.env.FPT_SERVER_ID
+  message: {
+    timedeleteMessage: 10000,
+    timedeleteImg: 30000
   }
 };

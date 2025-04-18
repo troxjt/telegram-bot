@@ -35,23 +35,6 @@ router.connect()
 // ==========================
 // 🛠️ HÀM TIỆN ÍCH
 // ==========================
-const safeEditMessage = async (bot, chatId, messageId, newText, options = {}) => {
-  try {
-    if (!safeEditMessage.lastText || safeEditMessage.lastText !== newText) {
-      safeEditMessage.lastText = newText;
-      await bot.editMessageText(newText, {
-        chat_id: chatId,
-        message_id: messageId,
-        ...options
-      });
-    }
-  } catch (err) {
-    if (err.response?.body?.description !== 'Bad Request: message is not modified') {
-      console.error('❌ Lỗi editMessageText:', err.message);
-    }
-  }
-};
-
 const sendAndDeleteMessage = async (chatId, text, options = {}) => {
   try {
     const sentMessage = await bot.sendMessage(chatId, text, options);
@@ -59,7 +42,7 @@ const sendAndDeleteMessage = async (chatId, text, options = {}) => {
       bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
         console.error('❌ Lỗi khi xóa tin nhắn:', err);
       });
-    }, 15000); // 15 giây
+    }, CONFIG.message.timedeleteMessage);
   } catch (err) {
     console.error('❌ Lỗi khi gửi tin nhắn:', err);
   }
@@ -72,7 +55,7 @@ const sendAndDeleteImg = async (chatId, text, options = {}) => {
       bot.deleteMessage(chatId, sentImg.message_id).catch((err) => {
         console.error('❌ Lỗi khi xóa ảnh:', err);
       });
-    }, 30000); // 15 giây
+    }, CONFIG.message.timedeleteImg);
   } catch (err) {
     console.error('❌ Lỗi khi gửi ảnh:', err);
   }
@@ -314,6 +297,11 @@ const handleBandwidth = async (chatId) => {
         `📶 *Ping*: ${ping} ms`;
 
       await safeEditMessage(result);
+      setTimeout(() => {
+        bot.deleteMessage(chatId, message.message_id).catch((err) => {
+          console.error('❌ Lỗi khi xóa tin nhắn:', err);
+        });
+      }, CONFIG.message.timedeleteMessage);
     } catch (e) {
       await safeEditMessage(`❌ *Lỗi phân tích kết quả:* ${e.message}`);
     }
@@ -334,7 +322,12 @@ const handleBandwidthAutoISP = async (chatId) => {
       parse_mode: 'Markdown'
     });
 
-    setTimeout(() => handleBandwidth(chatId, serverId), 2000);
+    setTimeout(() => {
+      bot.deleteMessage(chatId, message.message_id).catch((err) => {
+        console.error('❌ Lỗi khi xóa tin nhắn:', err);
+      });
+      handleBandwidth(chatId, serverId)
+    }, 2000);
   } catch (err) {
     await bot.editMessageText(`❌ *Lỗi kiểm tra ISP:* ${err.message}`, {
       chat_id: chatId,
