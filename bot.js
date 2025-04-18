@@ -7,7 +7,6 @@ const { RouterOSAPI } = require('node-routeros');
 const { exec } = require('child_process');
 const fs = require('fs');
 const cron = require('node-cron');
-const speedTest = require('speedtest-net');
 const axios = require('axios');
 const path = './data/bandwidth.json';
 const CONFIG = require('./config');
