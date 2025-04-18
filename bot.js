@@ -204,7 +204,7 @@ const handleBandwidth = async (chatId) => {
     const test = speedTest({ 
       acceptLicense: true, 
       acceptGdpr: true, 
-      serverId: CONFIG.speedtest.serverId
+      serverId: 2552
     });
 
     let message = '📡 *ĐANG ĐO TỐC ĐỘ MẠNG...*\n\n';
