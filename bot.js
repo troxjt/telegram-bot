@@ -70,7 +70,7 @@ const askSpeedtestMode = async (chatId) => {
       ]
     }
   };
-  await bot.sendMessage(chatId, text, options);
+  await sendAndDeleteMessage(chatId, text, options);
 };
 
 bot.onText(/\/start/, (msg) => {
