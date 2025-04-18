@@ -34,6 +34,23 @@ router.connect()
 // ==========================
 // 🛠️ HÀM TIỆN ÍCH
 // ==========================
+const safeEditMessage = async (bot, chatId, messageId, newText, options = {}) => {
+  try {
+    if (!safeEditMessage.lastText || safeEditMessage.lastText !== newText) {
+      safeEditMessage.lastText = newText;
+      await bot.editMessageText(newText, {
+        chat_id: chatId,
+        message_id: messageId,
+        ...options
+      });
+    }
+  } catch (err) {
+    if (err.response?.body?.description !== 'Bad Request: message is not modified') {
+      console.error('❌ Lỗi editMessageText:', err.message);
+    }
+  }
+};
+
 const sendAndDeleteMessage = async (chatId, text, options = {}) => {
   try {
     const sentMessage = await bot.sendMessage(chatId, text, options);
@@ -200,7 +217,7 @@ const handleListConnections = async (chatId) => {
 };
 
 const handleBandwidth = async (chatId) => {
-  const message = await bot.sendMessage(chatId, '📡 *ĐANG CHUẨN BỊ ĐO...*', { parse_mode: 'Markdown' });
+  const message = await safeEditMessage(bot, chatId, message.message_id, '📡 *ĐANG CHUẨN BỊ ĐO...*', { parse_mode: 'Markdown' });
 
   const steps = [
     '📡 *ĐANG CHUẨN BỊ ĐO...*',
