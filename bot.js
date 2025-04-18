@@ -217,7 +217,8 @@ const handleListConnections = async (chatId) => {
 };
 
 const handleBandwidth = async (chatId) => {
-  const message = await safeEditMessage(bot, chatId, message.message_id, '📡 *ĐANG CHUẨN BỊ ĐO...*', { parse_mode: 'Markdown' });
+  // Gửi tin nhắn đầu tiên
+  const message = await bot.sendMessage(chatId, '📡 *ĐANG CHUẨN BỊ ĐO...*', { parse_mode: 'Markdown' });
 
   const steps = [
     '📡 *ĐANG CHUẨN BỊ ĐO...*',
@@ -232,22 +233,18 @@ const handleBandwidth = async (chatId) => {
 
   const interval = setInterval(() => {
     if (i < steps.length) {
-      bot.editMessageText(steps[i], {
-        chat_id: chatId,
-        message_id: message.message_id,
-        parse_mode: 'Markdown'
-      });
+      safeEditMessage(bot, chatId, message.message_id, steps[i], { parse_mode: 'Markdown' });
       i++;
     }
-  }, 1500); // thay đổi trạng thái mỗi 1.5 giây (tùy bạn)
+  }, 1500); // Mỗi bước 1.5s
 
+  // Thực thi đo tốc độ
+  const { exec } = require('child_process');
   exec('speedtest --accept-license --accept-gdpr -f json', async (error, stdout, stderr) => {
     clearInterval(interval);
 
     if (error) {
-      await bot.editMessageText(`❌ *Lỗi đo tốc độ:* ${error.message}`, {
-        chat_id: chatId,
-        message_id: message.message_id,
+      await safeEditMessage(bot, chatId, message.message_id, `❌ *Lỗi đo tốc độ:* ${error.message}`, {
         parse_mode: 'Markdown'
       });
       return;
@@ -269,15 +266,9 @@ const handleBandwidth = async (chatId) => {
         `🔺 *Upload*: ${upload} Mbps\n` +
         `📶 *Ping*: ${ping} ms`;
 
-      await bot.editMessageText(result, {
-        chat_id: chatId,
-        message_id: message.message_id,
-        parse_mode: 'Markdown'
-      });
+      await safeEditMessage(bot, chatId, message.message_id, result, { parse_mode: 'Markdown' });
     } catch (e) {
-      await bot.editMessageText(`❌ *Lỗi phân tích kết quả:* ${e.message}`, {
-        chat_id: chatId,
-        message_id: message.message_id,
+      await safeEditMessage(bot, chatId, message.message_id, `❌ *Lỗi phân tích kết quả:* ${e.message}`, {
         parse_mode: 'Markdown'
       });
     }
