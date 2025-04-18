@@ -217,8 +217,30 @@ const handleListConnections = async (chatId) => {
 };
 
 const handleBandwidth = async (chatId) => {
-  // Gửi tin nhắn đầu tiên
+  let lastText = ''; // nội dung đã gửi lần trước
+
+  const safeEditMessage = async (text) => {
+    try {
+      if (text !== lastText) {
+        lastText = text;
+        await bot.editMessageText(text, {
+          chat_id: chatId,
+          message_id: message.message_id,
+          parse_mode: 'Markdown'
+        });
+      }
+    } catch (err) {
+      if (
+        err.response?.body?.description !== 'Bad Request: message is not modified'
+      ) {
+        console.error('❌ Lỗi editMessageText:', err.message);
+      }
+    }
+  };
+
+  // Gửi tin nhắn khởi tạo
   const message = await bot.sendMessage(chatId, '📡 *ĐANG CHUẨN BỊ ĐO...*', { parse_mode: 'Markdown' });
+  lastText = '📡 *ĐANG CHUẨN BỊ ĐO...*';
 
   const steps = [
     '📡 *ĐANG CHUẨN BỊ ĐO...*',
@@ -229,24 +251,22 @@ const handleBandwidth = async (chatId) => {
     '📊 *PHÂN TÍCH KẾT QUẢ...*'
   ];
 
-  let i = 0;
+  let stepIndex = 0;
 
   const interval = setInterval(() => {
-    if (i < steps.length) {
-      safeEditMessage(bot, chatId, message.message_id, steps[i], { parse_mode: 'Markdown' });
-      i++;
+    if (stepIndex < steps.length) {
+      safeEditMessage(steps[stepIndex]);
+      stepIndex++;
     }
-  }, 1500); // Mỗi bước 1.5s
+  }, 1500);
 
-  // Thực thi đo tốc độ
   const { exec } = require('child_process');
+
   exec('speedtest --accept-license --accept-gdpr -f json', async (error, stdout, stderr) => {
     clearInterval(interval);
 
     if (error) {
-      await safeEditMessage(bot, chatId, message.message_id, `❌ *Lỗi đo tốc độ:* ${error.message}`, {
-        parse_mode: 'Markdown'
-      });
+      await safeEditMessage(`❌ *Lỗi đo tốc độ:* ${error.message}`);
       return;
     }
 
@@ -266,11 +286,9 @@ const handleBandwidth = async (chatId) => {
         `🔺 *Upload*: ${upload} Mbps\n` +
         `📶 *Ping*: ${ping} ms`;
 
-      await safeEditMessage(bot, chatId, message.message_id, result, { parse_mode: 'Markdown' });
+      await safeEditMessage(result);
     } catch (e) {
-      await safeEditMessage(bot, chatId, message.message_id, `❌ *Lỗi phân tích kết quả:* ${e.message}`, {
-        parse_mode: 'Markdown'
-      });
+      await safeEditMessage(`❌ *Lỗi phân tích kết quả:* ${e.message}`);
     }
   });
 };
