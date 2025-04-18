@@ -8,6 +8,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const cron = require('node-cron');
 const speedTest = require('speedtest-net');
+const axios = require('axios');
 const path = './data/bandwidth.json';
 const CONFIG = require('./config');
 
@@ -145,7 +146,7 @@ bot.on('callback_query', async (cbq) => {
       case 'list_connections':
         return handleListConnections(chatId);
       case 'check_bandwidth':
-        return handleBandwidth(chatId);
+        return handleBandwidthAutoISP(chatId);
       case 'interface_status':
         return handleInterfaceStatus(chatId);
       case 'show_blacklist':
@@ -214,6 +215,32 @@ const handleListConnections = async (chatId) => {
   } catch (err) {
     sendAndDeleteMessage(chatId, '❌ Lỗi khi lấy danh sách kết nối.');
   }
+};
+
+const getISP = async () => {
+  try {
+    const res = await axios.get('https://ipinfo.io/json');
+    return res.data.org; // ví dụ: 'AS18403 FPT Telecom Company'
+  } catch (err) {
+    console.error('❌ Không lấy được ISP:', err.message);
+    return null;
+  }
+};
+
+const getServerIdByISP = (ispName) => {
+  const mappings = [
+    { keyword: 'FPT', id: 4181 },      // FPT Hanoi
+    { keyword: 'Viettel', id: 4062 },  // Viettel HCM
+    { keyword: 'VNPT', id: 7232 },     // VNPT Hanoi
+  ];
+
+  for (let entry of mappings) {
+    if (ispName.toLowerCase().includes(entry.keyword.toLowerCase())) {
+      return entry.id;
+    }
+  }
+
+  return 21541; // fallback đo quốc tế Singapore
 };
 
 const handleBandwidth = async (chatId) => {
@@ -291,6 +318,30 @@ const handleBandwidth = async (chatId) => {
       await safeEditMessage(`❌ *Lỗi phân tích kết quả:* ${e.message}`);
     }
   });
+};
+
+const handleBandwidthAutoISP = async (chatId) => {
+  const message = await bot.sendMessage(chatId, '📡 *ĐANG KIỂM TRA NHÀ MẠNG...*', { parse_mode: 'Markdown' });
+
+  try {
+    const isp = await getISP();
+    if (!isp) throw new Error('Không xác định được nhà mạng');
+
+    const serverId = getServerIdByISP(isp);
+    await bot.editMessageText(`✅ *Nhà mạng:* ${isp}\n🔍 *Chọn server phù hợp...*`, {
+      chat_id: chatId,
+      message_id: message.message_id,
+      parse_mode: 'Markdown'
+    });
+
+    setTimeout(() => handleBandwidth(chatId, serverId), 2000);
+  } catch (err) {
+    await bot.editMessageText(`❌ *Lỗi kiểm tra ISP:* ${err.message}`, {
+      chat_id: chatId,
+      message_id: message.message_id,
+      parse_mode: 'Markdown'
+    });
+  }
 };
 
 const handleInterfaceStatus = async (chatId) => {
