@@ -1,7 +1,3 @@
-// ==========================
-// 🔐 TELEGRAM BOT + ROUTEROS
-// ==========================
-
 const TelegramBot = require('node-telegram-bot-api');
 const { RouterOSAPI } = require('node-routeros');
 const { exec } = require('child_process');
@@ -180,9 +176,6 @@ bot.on('callback_query', async (cbq) => {
   }
 });
 
-// ==========================
-// 🧩 CÁC HÀM XỬ LÝ CHÍNH
-// ==========================
 const handleSystemInfo = async (chatId) => {
   try {
     const [res, identity, license] = await Promise.all([
