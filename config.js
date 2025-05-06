@@ -12,6 +12,15 @@ module.exports = {
     user: process.env.ROUTER_USER,
     password: process.env.ROUTER_PASSWORD
   },
+  database: {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+  },
   message: {
     timedeleteMessage: 10000,
     timedeleteImg: 30000

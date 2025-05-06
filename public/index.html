@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Device Trust Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 2rem;
+      background-color: #f8f9fa;
+    }
+    .table td, .table th {
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mb-4">Trust Score Dashboard</h1>
+    <table class="table table-bordered table-hover align-middle text-center" id="deviceTable">
+      <thead class="table-dark">
+        <tr>
+          <th>MAC</th>
+          <th>IP</th>
+          <th>Hostname</th>
+          <th>Comment</th>
+          <th>Trust Score</th>
+          <th>Whitelisted</th>
+          <th>Last Seen</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="deviceTableBody">
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    async function fetchDevices() {
+      try {
+        const res = await fetch('/api/devices');
+        const data = await res.json();
+        const tbody = document.getElementById('deviceTableBody');
+        tbody.innerHTML = '';
+
+        for (const device of data) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${device.mac}</td>
+            <td>${device.ip}</td>
+            <td>${device.hostname}</td>
+            <td>${device.comment}</td>
+            <td><span class="badge ${getTrustClass(device.trust_score)}">${device.trust_score}</span></td>
+            <td>${device.whitelisted ? '✅' : ''}</td>
+            <td>${new Date(device.last_seen).toLocaleString()}</td>
+            <td>
+              <button class="btn btn-sm btn-warning me-1" onclick="resetScore('${device.mac}')">Reset</button>
+              <button class="btn btn-sm btn-danger me-1" onclick="unblock('${device.ip}')">Unblock</button>
+              <button class="btn btn-sm btn-success" onclick="whitelist('${device.mac}')">Whitelist</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        }
+      } catch (err) {
+        console.error('Error fetching devices:', err);
+      }
+    }
+
+    function getTrustClass(score) {
+      if (score >= 90) return 'bg-success';
+      if (score >= 60) return 'bg-primary';
+      if (score >= 30) return 'bg-warning text-dark';
+      return 'bg-danger';
+    }
+
+    async function unblock(ip) {
+      await fetch('/api/device/unblock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip })
+      });
+      fetchDevices();
+    }
+
+    async function resetScore(mac) {
+      await fetch('/api/device/reset-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mac })
+      });
+      fetchDevices();
+    }
+
+    async function whitelist(mac) {
+      await fetch('/api/device/whitelist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mac })
+      });
+      fetchDevices();
+    }
+
+    // Auto refresh every 30s
+    fetchDevices();
+    setInterval(fetchDevices, 30000);
+  </script>
+</body>
+</html>
