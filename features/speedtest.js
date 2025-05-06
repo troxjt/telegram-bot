@@ -1,4 +1,6 @@
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
+const axios = require('axios');
+const { exec } = require('child_process');
 
 const askSpeedtestMode = async (bot, chatId) => {
   const text = '📶 *Chọn loại đo tốc độ bạn muốn:*';
@@ -21,8 +23,86 @@ const askSpeedtestMode = async (bot, chatId) => {
   await sendAndDeleteMessage(bot, chatId, text, options);
 };
 
-const handleBandwidthAutoISP = async (bot, chatId) => {
-  // Implementation for auto ISP detection and speed test
+const handleBandwidth = async (bot, chatId, serverId) => {
+  const message = await bot.sendMessage(chatId, '📡 *ĐANG CHUẨN BỊ ĐO...*', { parse_mode: 'Markdown' });
+
+  exec(`speedtest --accept-license --accept-gdpr -s ${serverId} -f json`, async (error, stdout) => {
+    if (error) {
+      return bot.editMessageText(`❌ *Lỗi đo tốc độ:* ${error.message}`, {
+        chat_id: chatId,
+        message_id: message.message_id,
+        parse_mode: 'Markdown'
+      });
+    }
+
+    try {
+      const data = JSON.parse(stdout);
+      const download = (data.download.bandwidth / 125000).toFixed(2);
+      const upload = (data.upload.bandwidth / 125000).toFixed(2);
+      const ping = data.ping.latency;
+      const server = `${data.server.name}, ${data.server.location}`;
+      const timestamp = new Date(data.timestamp).toLocaleString('vi-VN');
+
+      const result =
+        `✅ *KẾT QUẢ TỐC ĐỘ:*\n\n` +
+        `🏢 *Server*: ${server}\n` +
+        `🕒 *Thời gian*: ${timestamp}\n\n` +
+        `🔻 *Download*: ${download} Mbps\n` +
+        `🔺 *Upload*: ${upload} Mbps\n` +
+        `📶 *Ping*: ${ping} ms`;
+
+      await bot.editMessageText(result, {
+        chat_id: chatId,
+        message_id: message.message_id,
+        parse_mode: 'Markdown'
+      });
+    } catch (err) {
+      bot.editMessageText(`❌ *Lỗi phân tích kết quả:* ${err.message}`, {
+        chat_id: chatId,
+        message_id: message.message_id,
+        parse_mode: 'Markdown'
+      });
+    }
+  });
 };
 
-module.exports = { askSpeedtestMode, handleBandwidthAutoISP };
+const handleBandwidthAutoISP = async (bot, chatId) => {
+  const message = await bot.sendMessage(chatId, '📡 *ĐANG KIỂM TRA NHÀ MẠNG...*', { parse_mode: 'Markdown' });
+
+  try {
+    const isp = await axios.get('https://ipinfo.io/json').then((res) => res.data.org);
+    const serverId = getServerIdByISP(isp);
+
+    await bot.editMessageText(`✅ *Nhà mạng:* ${isp}\n🔍 *Chọn server phù hợp...*`, {
+      chat_id: chatId,
+      message_id: message.message_id,
+      parse_mode: 'Markdown'
+    });
+
+    setTimeout(() => handleBandwidth(bot, chatId, serverId), 2000);
+  } catch (err) {
+    bot.editMessageText(`❌ *Lỗi kiểm tra ISP:* ${err.message}`, {
+      chat_id: chatId,
+      message_id: message.message_id,
+      parse_mode: 'Markdown'
+    });
+  }
+};
+
+const getServerIdByISP = (ispName) => {
+  const mappings = [
+    { keyword: 'FPT', id: 4181 },
+    { keyword: 'Viettel', id: 4062 },
+    { keyword: 'VNPT', id: 7232 }
+  ];
+
+  for (const entry of mappings) {
+    if (ispName.toLowerCase().includes(entry.keyword.toLowerCase())) {
+      return entry.id;
+    }
+  }
+
+  return 21541; // Default to Singapore server
+};
+
+module.exports = { askSpeedtestMode, handleBandwidth, handleBandwidthAutoISP };

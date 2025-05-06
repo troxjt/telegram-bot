@@ -38,4 +38,17 @@ const handleListConnections = async (bot, chatId) => {
   }
 };
 
-module.exports = { handleSystemInfo, handleListConnections };
+const handleInterfaceStatus = async (bot, chatId) => {
+  try {
+    const result = await router.write('/interface/print');
+    let message = '🌐 *TRẠNG THÁI GIAO DIỆN:*\n\n';
+    result.forEach((iface) => {
+      message += `🔸 ${iface.name}: ${iface.running ? '✅ *Hoạt động*' : '❌ *Dừng*'}\n`;
+    });
+    sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
+  } catch (err) {
+    sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy trạng thái giao diện.');
+  }
+};
+
+module.exports = { handleSystemInfo, handleListConnections, handleInterfaceStatus };
