@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-module.exports = {
+const CONFIG = {
   telegram: {
     token: process.env.TELEGRAM_TOKEN,
     chatId: process.env.TELEGRAM_CHAT_ID,
@@ -12,7 +12,7 @@ module.exports = {
     user: process.env.ROUTER_USER,
     password: process.env.ROUTER_PASSWORD
   },
-  database: {
+  db: {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -26,3 +26,5 @@ module.exports = {
     timedeleteImg: 30000
   }
 };
+
+module.exports = CONFIG;

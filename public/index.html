@@ -1,109 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Device Trust Dashboard</title>
+  <title>Quản Lý Thiết Bị</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
   <style>
     body {
       padding: 2rem;
-      background-color: #f8f9fa;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      font-family: 'Roboto', sans-serif;
     }
-    .table td, .table th {
-      vertical-align: middle;
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+    section {
+      margin-bottom: 2rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      color: #f8f9fa;
+    }
+    table {
+      background-color: #fff;
+      color: #333;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    table th {
+      background-color: #007bff;
+      color: #fff;
+      text-transform: uppercase;
+    }
+    table td, table th {
+      padding: 1rem;
+      text-align: center;
+    }
+    .btn {
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+    }
+    .btn-success {
+      background: linear-gradient(135deg, #28a745, #218838);
+    }
+    .btn-success:hover {
+      background: linear-gradient(135deg, #218838, #28a745);
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #dc3545, #c82333);
+    }
+    .btn-danger:hover {
+      background: linear-gradient(135deg, #c82333, #dc3545);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="mb-4">Trust Score Dashboard</h1>
-    <table class="table table-bordered table-hover align-middle text-center" id="deviceTable">
-      <thead class="table-dark">
-        <tr>
-          <th>MAC</th>
-          <th>IP</th>
-          <th>Hostname</th>
-          <th>Comment</th>
-          <th>Trust Score</th>
-          <th>Whitelisted</th>
-          <th>Last Seen</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="deviceTableBody">
-      </tbody>
-    </table>
-  </div>
+  <header>
+    <h1>Quản Lý Thiết Bị</h1>
+  </header>
+  <main>
+    <section>
+      <h2>Thiết Bị Được Tin Cậy</h2>
+      <table class="table table-bordered table-hover align-middle text-center" id="whitelistTable">
+        <thead>
+          <tr>
+            <th>Địa Chỉ MAC</th>
+            <th>Địa Chỉ IP</th>
+            <th>Giao Diện</th>
+          </tr>
+        </thead>
+        <tbody id="whitelistTableBody">
+          <!-- Thiết bị tin cậy sẽ được tải động -->
+        </tbody>
+      </table>
+    </section>
+    <section>
+      <h2>Thiết Bị Đáng Ngờ</h2>
+      <table class="table table-bordered table-hover align-middle text-center" id="suspiciousTable">
+        <thead>
+          <tr>
+            <th>Địa Chỉ MAC</th>
+            <th>Địa Chỉ IP</th>
+            <th>Giao Diện</th>
+            <th>Hành Động</th>
+          </tr>
+        </thead>
+        <tbody id="suspiciousTableBody">
+          <!-- Thiết bị đáng ngờ sẽ được tải động -->
+        </tbody>
+      </table>
+    </section>
+  </main>
 
-  <script>
-    async function fetchDevices() {
-      try {
-        const res = await fetch('/api/devices');
-        const data = await res.json();
-        const tbody = document.getElementById('deviceTableBody');
-        tbody.innerHTML = '';
-
-        for (const device of data) {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${device.mac}</td>
-            <td>${device.ip}</td>
-            <td>${device.hostname}</td>
-            <td>${device.comment}</td>
-            <td><span class="badge ${getTrustClass(device.trust_score)}">${device.trust_score}</span></td>
-            <td>${device.whitelisted ? '✅' : ''}</td>
-            <td>${new Date(device.last_seen).toLocaleString()}</td>
-            <td>
-              <button class="btn btn-sm btn-warning me-1" onclick="resetScore('${device.mac}')">Reset</button>
-              <button class="btn btn-sm btn-danger me-1" onclick="unblock('${device.ip}')">Unblock</button>
-              <button class="btn btn-sm btn-success" onclick="whitelist('${device.mac}')">Whitelist</button>
-            </td>
-          `;
-          tbody.appendChild(row);
-        }
-      } catch (err) {
-        console.error('Error fetching devices:', err);
-      }
-    }
-
-    function getTrustClass(score) {
-      if (score >= 90) return 'bg-success';
-      if (score >= 60) return 'bg-primary';
-      if (score >= 30) return 'bg-warning text-dark';
-      return 'bg-danger';
-    }
-
-    async function unblock(ip) {
-      await fetch('/api/device/unblock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip })
-      });
-      fetchDevices();
-    }
-
-    async function resetScore(mac) {
-      await fetch('/api/device/reset-score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mac })
-      });
-      fetchDevices();
-    }
-
-    async function whitelist(mac) {
-      await fetch('/api/device/whitelist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mac })
-      });
-      fetchDevices();
-    }
-
-    // Auto refresh every 30s
-    fetchDevices();
-    setInterval(fetchDevices, 30000);
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
