@@ -8,7 +8,7 @@ const sendAndDeleteMessage = async (bot, chatId, text, options = {}) => {
         bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
           console.error('❌ Lỗi khi xóa tin nhắn:', err.message);
         });
-      }, CONFIG.message?.timedeleteMessage || 5000); // Giá trị mặc định là 5000ms
+      }, 10000); // Giá trị mặc định là 5000ms
     }
   } catch (err) {
     console.error('❌ Lỗi khi gửi tin nhắn:', err.message);

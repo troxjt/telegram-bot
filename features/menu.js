@@ -1,5 +1,6 @@
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
-const { handleSystemInfo, handleListConnections, handleBandwidth, handleBlacklist } = require('./system');
+const { handleSystemInfo, handleListConnections, handleInterfaceStatus } = require('./system');
+const { handleBlacklist } = require('./blacklist');
 const { askSpeedtestMode, handleBandwidthAutoISP } = require('./speedtest');
 const { generateBandwidthChart } = require('./chart');
 const { confirmReboot, rebootRouter } = require('./reboot');
@@ -49,6 +50,8 @@ const handleCallbackQuery = async (bot, cbq) => {
         return showMenu(bot, chatId);
       case 'get_system_info':
         return handleSystemInfo(bot, chatId);
+      case 'interface_status':
+        return handleInterfaceStatus(bot, chatId);
       case 'list_connections':
         return handleListConnections(bot, chatId);
       case 'check_bandwidth':
