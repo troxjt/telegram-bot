@@ -6,12 +6,12 @@ const sendAndDeleteMessage = async (bot, chatId, text, options = {}) => {
     if (sentMessage && sentMessage.message_id) {
       setTimeout(() => {
         bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
-          console.error('❌ Lỗi khi xóa tin nhắn:', err);
+          console.error('❌ Lỗi khi xóa tin nhắn:', err.message);
         });
-      }, 10000);
+      }, CONFIG.message?.timedeleteMessage || 5000); // Giá trị mặc định là 5000ms
     }
   } catch (err) {
-    console.error('❌ Lỗi khi gửi tin nhắn:', err);
+    console.error('❌ Lỗi khi gửi tin nhắn:', err.message);
   }
 };
 
@@ -21,12 +21,12 @@ const sendAndDeleteImg = async (bot, chatId, text, options = {}) => {
     if (sentImg && sentImg.message_id) {
       setTimeout(() => {
         bot.deleteMessage(chatId, sentImg.message_id).catch((err) => {
-          console.error('❌ Lỗi khi xóa ảnh:', err);
+          console.error('❌ Lỗi khi xóa ảnh:', err.message);
         });
-      }, CONFIG.message.timedeleteImg);
+      }, CONFIG.message?.timedeleteImg || 5000); // Giá trị mặc định là 5000ms
     }
   } catch (err) {
-    console.error('❌ Lỗi khi gửi ảnh:', err);
+    console.error('❌ Lỗi khi gửi ảnh:', err.message);
   }
 };
 

@@ -17,12 +17,18 @@ module.exports = {
             });
             console.log('[DB] Kết nối thành công.');
         } catch (err) {
-            throw new Error(`[DB ERROR] Không thể tạo pool kết nối: ${err.message}`);
+            console.error(`[DB ERROR] Không thể tạo pool kết nối: ${err.message}`);
+            throw err;
         }
     },
     query: async (sql, params) => {
         if (!pool) throw new Error('Database chưa kết nối.');
-        const [results] = await pool.execute(sql, params);
-        return results;
+        try {
+            const [results] = await pool.execute(sql, params);
+            return results;
+        } catch (err) {
+            console.error(`[DB ERROR] Query failed: ${err.message}`);
+            throw err;
+        }
     }
 };

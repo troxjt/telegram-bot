@@ -22,7 +22,12 @@ const initializeBotFeatures = (bot) => {
   bot.onText(/\/menu/, (msg) => showMenu(bot, msg.chat.id));
 
   bot.on('callback_query', async (cbq) => {
-    await handleCallbackQuery(bot, cbq);
+    try {
+      await handleCallbackQuery(bot, cbq);
+    } catch (err) {
+      console.error('❌ Lỗi xử lý callback:', err.message);
+      bot.sendMessage(cbq.message.chat.id, '❌ Đã xảy ra lỗi khi xử lý yêu cầu.');
+    }
   });
 };
 

@@ -1,32 +1,35 @@
-const { router } = require('../config');
+const { connect } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 
 const handleSystemInfo = async (bot, chatId) => {
   try {
+    const router = await connect(); // Ensure connection to RouterOS
     const [res, identity] = await Promise.all([
       router.write('/system/resource/print'),
       router.write('/system/identity/print')
     ]);
 
     const status = res[0];
-    const name = identity[0].name;
+    const name = identity[0]?.name || 'Unknown';
 
     const message = `🖥️ *THÔNG TIN PC ROUTER:*
 🔧 *NAME*: ${name}
 ⚙️ *CPU*: ${status['cpu-load']}%
-🧠 *RAM*: ${status['free-memory']} bytes
-💾 *DISK*: ${status['total-memory']} bytes
+🧠 *RAM*: ${(status['free-memory'] / 1048576).toFixed(2)} MB
+💾 *DISK*: ${(status['total-memory'] / 1048576).toFixed(2)} MB
 ⏱️ *UPTIME*: ${status['uptime']}
 🛠️ *ROUTEROS*: ${status['version']}`;
 
     sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
+    console.error('❌ Lỗi khi lấy thông tin hệ thống:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy thông tin hệ thống.');
   }
 };
 
 const handleListConnections = async (bot, chatId) => {
   try {
+    const router = await connect(); // Ensure connection to RouterOS
     const result = await router.write('/ip/arp/print');
     let message = '🔌 *DANH SÁCH KẾT NỐI ARP:*\n\n';
     result.forEach((c, i) => {
@@ -34,12 +37,14 @@ const handleListConnections = async (bot, chatId) => {
     });
     sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
+    console.error('❌ Lỗi khi lấy danh sách kết nối:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách kết nối.');
   }
 };
 
 const handleInterfaceStatus = async (bot, chatId) => {
   try {
+    const router = await connect(); // Ensure connection to RouterOS
     const result = await router.write('/interface/print');
     let message = '🌐 *TRẠNG THÁI GIAO DIỆN:*\n\n';
     result.forEach((iface) => {
@@ -47,6 +52,7 @@ const handleInterfaceStatus = async (bot, chatId) => {
     });
     sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
+    console.error('❌ Lỗi khi lấy trạng thái giao diện:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy trạng thái giao diện.');
   }
 };
