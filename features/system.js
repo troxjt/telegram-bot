@@ -10,15 +10,15 @@ const handleSystemInfo = async (bot, chatId) => {
     ]);
 
     const status = res[0];
-    const name = identity[0]?.name || 'Unknown';
+    const name = identity[0]?.name || 'Không xác định';
 
-    const message = `🖥️ *THÔNG TIN PC ROUTER:*
-🔧 *NAME*: ${name}
+    const message = `🖥️ *THÔNG TIN ROUTER:*
+🔧 *Tên*: ${name}
 ⚙️ *CPU*: ${status['cpu-load']}%
 🧠 *RAM*: ${(status['free-memory'] / 1048576).toFixed(2)} MB
-💾 *DISK*: ${(status['total-memory'] / 1048576).toFixed(2)} MB
-⏱️ *UPTIME*: ${status['uptime']}
-🛠️ *ROUTEROS*: ${status['version']}`;
+💾 *Ổ đĩa*: ${(status['total-memory'] / 1048576).toFixed(2)} MB
+⏱️ *Thời gian hoạt động*: ${status['uptime']}
+🛠️ *Phiên bản RouterOS*: ${status['version']}`;
 
     sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {

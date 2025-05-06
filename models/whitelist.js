@@ -1,8 +1,8 @@
 const db = require('../db');
 
-async function getWhitelist() {
-    const sql = 'SELECT mac FROM whitelist';
-    return await db.query(sql);
+async function isWhitelisted(mac) {
+  const result = await db.query('SELECT 1 FROM whitelist WHERE mac = ?', [mac]);
+  return result.length > 0;
 }
 
-module.exports = { getWhitelist };
+module.exports = { isWhitelisted };

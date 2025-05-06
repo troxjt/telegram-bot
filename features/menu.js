@@ -19,15 +19,15 @@ const showMenu = (bot, chatId) => {
           { text: '📶 Băng thông', callback_data: 'check_bandwidth' }
         ],
         [
-          { text: '📛 Blacklist', callback_data: 'show_blacklist' }
+          { text: '📛 Danh sách chặn', callback_data: 'show_blacklist' }
         ],
         [
           { text: '📊 Biểu đồ mạng', callback_data: 'show_chart' },
-          { text: '🤖 AI Defense', callback_data: 'ai_defense_menu' }
+          { text: '🤖 AI Phòng thủ', callback_data: 'ai_defense_menu' }
         ],
         [
-          { text: '🧠 Update Bot', callback_data: 'update_code_bot' },
-          { text: '🔁 Reboot', callback_data: 'reboot_router' }
+          { text: '🧠 Cập nhật Bot', callback_data: 'update_code_bot' },
+          { text: '🔁 Khởi động lại', callback_data: 'reboot_router' }
         ]
       ]
     }

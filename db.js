@@ -5,6 +5,7 @@ let pool;
 
 module.exports = {
     connect: async () => {
+        if (pool) return;
         try {
             pool = await mysql.createPool({
                 host: db.host,
@@ -27,7 +28,7 @@ module.exports = {
             const [results] = await pool.execute(sql, params);
             return results;
         } catch (err) {
-            console.error(`[DB ERROR] Query failed: ${err.message}`);
+            console.error(`[DB ERROR] Truy vấn không thành công: ${err.message}`);
             throw err;
         }
     }

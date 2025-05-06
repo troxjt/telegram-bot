@@ -45,10 +45,10 @@ const handleBandwidth = async (bot, chatId, serverId) => {
 
       const result =
         `✅ *KẾT QUẢ TỐC ĐỘ:*\n\n` +
-        `🏢 *Server*: ${server}\n` +
+        `🏢 *Máy chủ*: ${server}\n` +
         `🕒 *Thời gian*: ${timestamp}\n\n` +
-        `🔻 *Download*: ${download} Mbps\n` +
-        `🔺 *Upload*: ${upload} Mbps\n` +
+        `🔻 *Tải xuống*: ${download} Mbps\n` +
+        `🔺 *Tải lên*: ${upload} Mbps\n` +
         `📶 *Ping*: ${ping} ms`;
 
       await bot.editMessageText(result, {

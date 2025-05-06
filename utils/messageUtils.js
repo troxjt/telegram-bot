@@ -1,33 +1,43 @@
-const { message } = require('../config');
+const { message, telegram } = require('../config');
 
-const sendAndDeleteMessage = async (bot, chatId, text, options = {}) => {
+const DEFAULT_DELETE_DELAY = 10000;
+const DEFAULT_IMG_DELETE_DELAY = 30000;
+
+const sendAndDelete = async (sendFunction, bot, chatId, content, options = {}, deleteDelay) => {
   try {
-    const sentMessage = await bot.sendMessage(chatId, text, options);
-    if (sentMessage && sentMessage.message_id) {
-      setTimeout(() => {
-        bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
-          console.error('❌ Lỗi khi xóa tin nhắn:', err.message);
-        });
-      }, message?.timedeleteMessage || 10000);
+    const sentMessage = await sendFunction(chatId, content, options);
+    if (sentMessage?.message_id) {
+      setTimeout(async () => {
+        try {
+          await bot.deleteMessage(chatId, sentMessage.message_id);
+        } catch (err) {
+          console.error(`❌ Lỗi khi xóa tin nhắn/ảnh:`, err.message);
+        }
+      }, deleteDelay);
     }
   } catch (err) {
-    console.error('❌ Lỗi khi gửi tin nhắn:', err.message);
+    console.error(`❌ Lỗi khi gửi tin nhắn/ảnh:`, err.message);
   }
 };
 
-const sendAndDeleteImg = async (bot, chatId, text, options = {}) => {
+const sendAndDeleteMessage = (bot, chatId, text, options = {}) => {
+  const deleteDelay = message?.timedeleteMessage ?? DEFAULT_DELETE_DELAY;
+  return sendAndDelete(bot.sendMessage.bind(bot), bot, chatId, text, options, deleteDelay);
+};
+
+const sendAndDeleteImg = (bot, chatId, photo, options = {}) => {
+  const deleteDelay = message?.timedeleteImg ?? DEFAULT_IMG_DELETE_DELAY;
+  return sendAndDelete(bot.sendPhoto.bind(bot), bot, chatId, photo, options, deleteDelay);
+};
+
+const sendAlert = async (mac, ip, iface) => {
+  const alertMessage = `[ALERT] Thiết bị không có trong whitelist:\nMAC: ${mac}\nIP: ${ip}\nInterface: ${iface}`;
   try {
-    const sentImg = await bot.sendPhoto(chatId, text, options);
-    if (sentImg && sentImg.message_id) {
-      setTimeout(() => {
-        bot.deleteMessage(chatId, sentImg.message_id).catch((err) => {
-          console.error('❌ Lỗi khi xóa ảnh:', err.message);
-        });
-      }, message?.timedeleteImg || 30000);
-    }
+    // await bot.sendMessage(telegram.chatId, alertMessage);
+    // console.log(`[NOTIFY] Đã gửi cảnh báo qua Telegram: MAC=${mac}, IP=${ip}`);
   } catch (err) {
-    console.error('❌ Lỗi khi gửi ảnh:', err.message);
+    console.error(`[LỖI] Không thể gửi cảnh báo qua Telegram: ${err.message}`);
   }
 };
 
-module.exports = { sendAndDeleteMessage, sendAndDeleteImg };
+module.exports = { sendAndDeleteMessage, sendAndDeleteImg, sendAlert };

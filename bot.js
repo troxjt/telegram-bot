@@ -1,25 +1,29 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { telegram } = require('./config');
+const { initializeBotFeatures } = require('./features');
+const { monitorDevices, startWebServer } = require('./server');
 const db = require('./db');
-const startWebServer = require('./server');
-const { initializeBotFeatures } = require('./features'); // Import feature initialization
 
 const bot = new TelegramBot(telegram.token, { polling: true });
 
+// Initialize periodic device monitoring
+monitorDevices();
+setInterval(monitorDevices, 5 * 60 * 1000);
+
 (async () => {
   try {
-    console.log('[INIT] Connecting to database...');
+    console.log('[INIT] Kết nối với cơ sở dữ liệu ...');
     await db.connect();
 
-    console.log('[WEB] Starting web server...');
-    startWebServer(81);
+    console.log('[WEB] Bắt đầu máy chủ web ...');
+    startWebServer(3000);
 
-    console.log('[BOT] Initializing features...');
-    initializeBotFeatures(bot); // Initialize all bot features
+    console.log('[BOT] Khởi tạo các tính năng bot ...');
+    initializeBotFeatures(bot);
 
-    console.log('[BOT] Telegram bot is ready.');
+    console.log('[BOT] Bot Telegram đã sẵn sàng.');
   } catch (err) {
-    console.error('[ERROR] Failed to start bot:', err.message);
+    console.error('[LỖI] Không thể bắt đầu bot:', err.message);
     process.exit(1);
   }
 })();
