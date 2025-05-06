@@ -22,8 +22,8 @@ const CONFIG = {
     queueLimit: 0
   },
   message: {
-    timedeleteMessage: 5000, // Thời gian xóa tin nhắn (ms)
-    timedeleteImg: 5000 // Thời gian xóa ảnh (ms)
+    timedeleteMessage: 10000,
+    timedeleteImg: 30000
   }
 };
 

@@ -1,4 +1,4 @@
-const { CONFIG } = require('../config');
+const { message } = require('../config');
 
 const sendAndDeleteMessage = async (bot, chatId, text, options = {}) => {
   try {
@@ -8,7 +8,7 @@ const sendAndDeleteMessage = async (bot, chatId, text, options = {}) => {
         bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
           console.error('❌ Lỗi khi xóa tin nhắn:', err.message);
         });
-      }, 10000); // Giá trị mặc định là 5000ms
+      }, message?.timedeleteMessage || 10000);
     }
   } catch (err) {
     console.error('❌ Lỗi khi gửi tin nhắn:', err.message);
@@ -23,7 +23,7 @@ const sendAndDeleteImg = async (bot, chatId, text, options = {}) => {
         bot.deleteMessage(chatId, sentImg.message_id).catch((err) => {
           console.error('❌ Lỗi khi xóa ảnh:', err.message);
         });
-      }, CONFIG.message?.timedeleteImg || 5000); // Giá trị mặc định là 5000ms
+      }, message?.timedeleteImg || 30000);
     }
   } catch (err) {
     console.error('❌ Lỗi khi gửi ảnh:', err.message);

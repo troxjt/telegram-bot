@@ -1,5 +1,13 @@
 const { router } = require('../config');
+const { exec } = require('child_process');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
+
+const execUpdate = (bot, chatId) => {
+  exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err) => {
+    if (err) sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi cập nhật bot.');
+    else sendAndDeleteMessage(bot, chatId, '✅ Bot đã được cập nhật và khởi động lại.');
+  });
+};
 
 const confirmReboot = async (bot, chatId) => {
   sendAndDeleteMessage(bot, chatId, '⚠️ *Bạn có chắc muốn khởi động lại Router không?*', {
@@ -24,4 +32,4 @@ const rebootRouter = async (bot, chatId) => {
   }
 };
 
-module.exports = { confirmReboot, rebootRouter };
+module.exports = { execUpdate, confirmReboot, rebootRouter };

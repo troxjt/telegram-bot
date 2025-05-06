@@ -3,8 +3,8 @@ const { handleSystemInfo, handleListConnections, handleInterfaceStatus } = requi
 const { handleBlacklist } = require('./blacklist');
 const { askSpeedtestMode, handleBandwidthAutoISP } = require('./speedtest');
 const { generateBandwidthChart } = require('./chart');
-const { confirmReboot, rebootRouter } = require('./reboot');
-// const { showAIMenu, showAIDefenseList } = require('./aiDefense');
+const { execUpdate, confirmReboot, rebootRouter } = require('./reboot');
+const { showAIMenu, showAIDefenseList } = require('./aiDefense');
 
 const showMenu = (bot, chatId) => {
   const options = {
@@ -19,8 +19,7 @@ const showMenu = (bot, chatId) => {
           { text: '📶 Băng thông', callback_data: 'check_bandwidth' }
         ],
         [
-          { text: '📛 Blacklist', callback_data: 'show_blacklist' },
-          { text: '🚫 Chặn IP', callback_data: 'block_ip_manual' }
+          { text: '📛 Blacklist', callback_data: 'show_blacklist' }
         ],
         [
           { text: '📊 Biểu đồ mạng', callback_data: 'show_chart' },
@@ -66,6 +65,8 @@ const handleCallbackQuery = async (bot, cbq) => {
         return showAIMenu(bot, chatId);
       case 'ai_defense_list':
         return showAIDefenseList(bot, chatId);
+      case 'update_code_bot':
+        return execUpdate(bot, chatId);
       case 'reboot_router':
         return confirmReboot(bot, chatId);
       case 'confirm_reboot_yes':
