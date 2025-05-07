@@ -13,6 +13,7 @@ async function connect() {
       timeout: 30000
     });
     await connection.connect();
+    return connection.menu('/'); // ✅ quan trọng: trả về router.menu('/')
   }
   return connection;
 }

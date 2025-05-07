@@ -1,6 +1,17 @@
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const axios = require('axios');
 const { exec } = require('child_process');
+const { promisify } = require('util');
+const execPromise = promisify(exec);
+
+const isSpeedtestAvailable = async () => {
+  try {
+    await execPromise('speedtest --version');
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 const askSpeedtestMode = async (bot, chatId) => {
   const text = '📶 *Chọn loại đo tốc độ bạn muốn:*';
@@ -24,6 +35,11 @@ const askSpeedtestMode = async (bot, chatId) => {
 };
 
 const handleBandwidth = async (bot, chatId, serverId) => {
+  const isAvailable = await isSpeedtestAvailable();
+  if (!isAvailable) {
+    return sendAndDeleteMessage(bot, chatId, '❌ *Speedtest CLI chưa được cài đặt. Vui lòng cài đặt trước khi sử dụng.*');
+  }
+
   const message = await bot.sendMessage(chatId, '📡 *ĐANG CHUẨN BỊ ĐO...*', { parse_mode: 'Markdown' });
 
   exec(`speedtest --accept-license --accept-gdpr -s ${serverId} -f json`, async (error, stdout) => {
