@@ -121,9 +121,10 @@ async function blockIP(ip, routerConn = null) {
       routerConn = await connect();
     }
     await routerConn.write('/ip/firewall/address-list/add', [
-      `=list=blocked`,
+      `=list=ai_blacklist`,
       `=address=${ip}`,
-      `=comment=Blocked by system`
+      `=timeout=24h`,
+      `=comment=AI Auto Block`
     ]);
 
     await db.query('INSERT INTO blocked_ips (ip, blocked_date) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE blocked_date = NOW()', [ip]);
