@@ -8,7 +8,7 @@ const bot = new TelegramBot(telegram.token, { polling: true });
 
 // Initialize periodic device monitoring
 monitorDevices();
-setInterval(monitorDevices, 5 * 60 * 1000);
+setInterval(monitorDevices, 10000);
 
 (async () => {
   try {

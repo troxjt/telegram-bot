@@ -5,8 +5,16 @@ const { connect } = require('./models/mikrotik');
 const { isWhitelisted } = require('./models/whitelist');
 const { isSuspicious, logSuspicious } = require('./models/suspicious');
 const { sendAlert } = require('./utils/messageUtils');
+const {
+  limitBandwidth,
+  trackConnection,
+  cleanupTrustedDevices,
+  monitorSuspiciousIPs
+} = require('./models/device');
 
 const app = express();
+const PORT = 3000;
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -15,10 +23,15 @@ app.get('/api/devices', async (req, res) => {
     try {
         const routerConn = await connect();
         const devices = await routerConn.write('/ip/arp/print');
+
+        const whitelist = await db.query('SELECT mac FROM whitelist');
+        const trustedMacs = new Set(whitelist.map(entry => entry.mac));
+
         res.json(devices.map(device => ({
             mac: device['mac-address'],
             ip: device['address'],
-            interface: device['interface']
+            interface: device['interface'],
+            isTrusted: trustedMacs.has(device['mac-address'])
         })));
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -70,15 +83,7 @@ async function monitorDevices() {
             const clientId = device['client-id'] || null;
 
             if (!mac || !ip || !iface) {
-                // console.warn(`[CẢNH BÁO] Thiếu thông tin thiết bị: MAC=${mac}, IP=${ip}, Interface=${iface}`);
-                if (!mac) {
-                    try {
-                        await routerConn.write('/ip/arp/remove', ['=.id=' + device['.id']]);
-                        // console.log(`[INFO] Đã xóa IP khỏi ARP: MAC=${mac}, IP=${ip}`);
-                    } catch (err) {
-                        console.error(`[ERROR] Không xóa IP khỏi ARP: MAC=${mac}, IP=${ip}, Error=${err.message}`);
-                    }
-                }
+                console.warn(`[WARN] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
                 continue;
             }
 
@@ -88,32 +93,27 @@ async function monitorDevices() {
             ]);
 
             if (!isWhiteListed && !isMarkedSuspicious) {
-                // console.log(`[ALERT] Thiết bị không được danh sách trắng: MAC=${mac}, IP=${ip}`);
-                try {
-                    await Promise.all([
-                        logSuspicious(mac, ip, iface, clientId),
-                        sendAlert(mac, ip, iface)
-                    ]);
-                } catch (err) {
-                    console.error(`[ERROR] Không xử lý được thiết bị đáng ngờ: MAC=${mac}, IP=${ip}, Error=${err.message}`);
-                }
+                await Promise.all([
+                    logSuspicious(mac, ip, iface, clientId),
+                    sendAlert(mac, ip, iface),
+                    limitBandwidth(mac, `${ip}/32`, iface) // Ensure IP is formatted with subnet mask
+                ]);
             }
+
+            await trackConnection(mac, `${ip}/32`, iface);
         }
+
+        await cleanupTrustedDevices();
+        await monitorSuspiciousIPs();
     } catch (err) {
         console.error('[ERROR] Giám sát thiết bị không thành công:', err.message);
     }
 }
 
 // Function to start the web server
-const startWebServer = (port) => {
-    const app = express();
-
-    app.get('/', (req, res) => {
-        res.send('Máy chủ Web Bot Telegram đang chạy.');
-    });
-
+const startWebServer = (port = PORT) => {
     app.listen(port, () => {
-        console.log(`[WEB] Máy chủ web bắt đầu trên cổng ${port}`);
+        console.log(`[WEB] Server is running on http://localhost:${port}`);
     });
 };
 

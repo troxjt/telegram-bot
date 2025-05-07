@@ -2,14 +2,14 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quản Lý Thiết Bị</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <style>
     body {
       padding: 2rem;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      background: linear-gradient(135deg, #000, #333);
       color: #fff;
       font-family: 'Roboto', sans-serif;
     }
@@ -20,6 +20,30 @@
     header h1 {
       font-size: 2.5rem;
       font-weight: bold;
+    }
+    nav {
+      margin-bottom: 2rem;
+    }
+    .menu {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .menu li {
+      display: inline;
+    }
+    .menu a {
+      text-decoration: none;
+      color: #fff;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #555, #777);
+    }
+    .menu a:hover {
+      background: linear-gradient(135deg, #777, #555);
     }
     section {
       margin-bottom: 2rem;
@@ -38,7 +62,7 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     table th {
-      background-color: #007bff;
+      background-color: #555;
       color: #fff;
       text-transform: uppercase;
     }
@@ -62,14 +86,26 @@
     .btn-danger:hover {
       background: linear-gradient(135deg, #c82333, #dc3545);
     }
+    .page {
+      display: none;
+    }
+    .page.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Quản Lý Thiết Bị</h1>
+    <nav>
+      <ul class="menu">
+        <li><a href="#" id="trustedDevicesLink">Thiết Bị Tin Cậy</a></li>
+        <li><a href="#" id="suspiciousDevicesLink">Thiết Bị Đáng Ngờ</a></li>
+      </ul>
+    </nav>
   </header>
   <main>
-    <section>
+    <section id="trustedDevicesPage" class="page active">
       <h2>Thiết Bị Được Tin Cậy</h2>
       <table class="table table-bordered table-hover align-middle text-center" id="whitelistTable">
         <thead>
@@ -77,6 +113,7 @@
             <th>Địa Chỉ MAC</th>
             <th>Địa Chỉ IP</th>
             <th>Giao Diện</th>
+            <th>Hành Động</th>
           </tr>
         </thead>
         <tbody id="whitelistTableBody">
@@ -84,7 +121,7 @@
         </tbody>
       </table>
     </section>
-    <section>
+    <section id="suspiciousDevicesPage" class="page">
       <h2>Thiết Bị Đáng Ngờ</h2>
       <table class="table table-bordered table-hover align-middle text-center" id="suspiciousTable">
         <thead>
@@ -101,7 +138,6 @@
       </table>
     </section>
   </main>
-
   <script src="script.js"></script>
 </body>
 </html>

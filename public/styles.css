@@ -1,21 +1,34 @@
 body {
-    font-family: 'Roboto', sans-serif;
+    background: radial-gradient(circle at center, #000 0%, #333 100%);
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
     margin: 0;
     padding: 0;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    color: #fff;
+    overflow-x: hidden;
 }
 
 header {
-    background-color: transparent;
+    background: linear-gradient(90deg, #333, #000, #333);
     text-align: center;
     padding: 1rem;
+    box-shadow: 0 0 15px #333;
 }
 
 header h1 {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: bold;
-    color: #f8f9fa;
+    color: #fff;
+    text-shadow: 0 0 10px #fff, 0 0 20px #ccc;
+    animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 10px #fff, 0 0 20px #ccc;
+    }
+    to {
+        text-shadow: 0 0 20px #fff, 0 0 30px #ccc;
+    }
 }
 
 main {
@@ -30,29 +43,96 @@ h2 {
     font-size: 1.8rem;
     margin-bottom: 1rem;
     text-transform: uppercase;
-    color: #f8f9fa;
+    color: #fff;
+}
+
+.menu {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #555;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #555;
+}
+
+.menu li {
+    margin: 0 1rem;
+}
+
+.menu a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #555, #333);
+    box-shadow: 0 0 10px #555;
+    transition: all 0.3s ease-in-out;
+}
+
+.menu a:hover {
+    background: linear-gradient(90deg, #333, #555);
+    box-shadow: 0 0 20px #555;
+    transform: scale(1.1);
+}
+
+.page {
+    display: none;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.page.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 1.5rem;
-    background-color: #fff;
-    color: #333;
-    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-table th, table td {
-    padding: 1rem;
-    text-align: center;
+    box-shadow: 0 0 15px #555;
+    border: 1px solid #555;
 }
 
 table th {
-    background-color: #007bff;
+    background: linear-gradient(90deg, #555, #333);
     color: #fff;
     text-transform: uppercase;
+    font-weight: bold;
+    padding: 1rem;
+}
+
+table td {
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid #555;
+}
+
+table td button {
+    margin: 0 0.2rem;
+    font-weight: bold;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease-in-out;
 }
 
 form {
@@ -83,20 +163,28 @@ form button:hover {
 .btn {
     border-radius: 20px;
     padding: 0.5rem 1rem;
+    color: #000;
+    font-weight: bold;
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #28a745, #218838);
+    background: linear-gradient(90deg, #555, #333);
+    box-shadow: 0 0 10px #555;
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #218838, #28a745);
+    background: linear-gradient(90deg, #333, #555);
+    box-shadow: 0 0 20px #555;
+    transform: scale(1.1);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #dc3545, #c82333);
+    background: linear-gradient(90deg, #444, #222);
+    box-shadow: 0 0 10px #444;
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #c82333, #dc3545);
+    background: linear-gradient(90deg, #222, #444);
+    box-shadow: 0 0 20px #444;
+    transform: scale(1.1);
 }
