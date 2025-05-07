@@ -104,7 +104,7 @@ async function monitorDevices() {
         }
 
         await cleanupTrustedDevices();
-        await monitorSuspiciousIPs();
+        // await monitorSuspiciousIPs();
     } catch (err) {
         console.error('[ERROR] Giám sát thiết bị không thành công:', err.message);
     }
@@ -113,7 +113,7 @@ async function monitorDevices() {
 // Function to start the web server
 const startWebServer = (port = PORT) => {
     app.listen(port, () => {
-        console.log(`[WEB] Server is running on http://localhost:${port}`);
+        // console.log(`[WEB] Server is running on http://localhost:${port}`);
     });
 };
 

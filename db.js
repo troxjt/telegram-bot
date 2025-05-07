@@ -16,7 +16,7 @@ module.exports = {
                 connectionLimit: db.connectionLimit,
                 queueLimit: db.queueLimit
             });
-            console.log('[DB] Kết nối thành công.');
+            // console.log('[DB] Kết nối thành công.');
         } catch (err) {
             console.error(`[DB ERROR] Không thể tạo pool kết nối: ${err.message}`);
             throw err;

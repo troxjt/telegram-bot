@@ -32,7 +32,7 @@ async function limitBandwidth(mac, ip, iface) {
         [mac, ip, iface]
       );
 
-      console.log(`[INFO] Bandwidth limited for MAC=${mac}, IP=${ip}`);
+      // console.log(`[INFO] Bandwidth limited for MAC=${mac}, IP=${ip}`);
     }
   } catch (err) {
     console.error(`[ERROR] Failed to limit bandwidth for MAC=${mac}: ${err.message}`);
@@ -94,12 +94,13 @@ async function monitorSuspiciousIPs() {
     const addressLists = await routerConn.write('/ip/firewall/address-list/print');
 
     for (const entry of addressLists) {
-      if (entry.name && entry.name.startsWith('ai_')) {
+      // console.log(entry.list, entry.list.startsWith('ai_'))
+      if (entry.list && entry.list.startsWith('ai_')) {
         const ip = entry.address;
         const isMalicious = await inspectIP(ip);
         if (isMalicious) {
           await blockIP(ip, routerConn);
-          console.log(`[ALERT] Blocked malicious IP=${ip}`);
+          // console.log(`[ALERT] Blocked malicious IP=${ip}`);
         }
       }
     }
@@ -110,7 +111,7 @@ async function monitorSuspiciousIPs() {
 }
 
 async function inspectIP(ip) {
-  console.log(`[INFO] Inspecting IP=${ip}`);
+  // console.log(`[INFO] Inspecting IP=${ip}`);
   return false;
 }
 
@@ -127,7 +128,7 @@ async function blockIP(ip, routerConn = null) {
 
     await db.query('INSERT INTO blocked_ips (ip, blocked_date) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE blocked_date = NOW()', [ip]);
 
-    console.log(`[INFO] IP=${ip} has been blocked in MikroTik and logged in the database.`);
+    // console.log(`[INFO] IP=${ip} has been blocked in MikroTik and logged in the database.`);
   } catch (err) {
     console.error(`[ERROR] Failed to block IP=${ip}: ${err.message}`);
     throw err;
