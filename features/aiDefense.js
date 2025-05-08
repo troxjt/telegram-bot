@@ -24,22 +24,32 @@ const showAIMenu = (bot, chatId) => {
 const showAIDefenseList = async (bot, chatId) => {
   try {
     const router = await connect(); // Ensure connection to RouterOS
-    const list = await router.write('/ip/firewall/address-list/print');
-    const smartList = list.filter((e) => e.list === 'ai_blacklist');
+    const smartList = await router.write('/ip/firewall/address-list/print', ['?list=ai_blacklist']);
 
     if (smartList.length === 0) {
       return sendAndDeleteMessage(bot, chatId, '✅ Không có IP nào bị AI chặn.');
     }
 
+    const MAX_MESSAGE_LENGTH = 4000;
     let msg = '🧠 *DANH SÁCH AI BLOCKED:*\n\n';
     smartList.forEach((e, i) => {
-      msg += `🔹 ${i + 1}. ${e.address} (${e.comment || 'No comment'})\n`;
+      const entry = `🔹 ${i + 1}. ${e.address} (${e.comment || 'No comment'})\n`;
+      if ((msg + entry).length > MAX_MESSAGE_LENGTH) {
+        sendAndDeleteMessage(bot, chatId, msg, { parse_mode: 'Markdown' });
+        msg = '';
+      }
+      msg += entry;
     });
 
-    sendAndDeleteMessage(bot, msg, { parse_mode: 'Markdown' });
+    if (msg) {
+      sendAndDeleteMessage(bot, chatId, msg, { parse_mode: 'Markdown' });
+    }
 
   } catch (err) {
+    // console.error(`[ERROR] Failed to fetch AI block list: ${err.message}`);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi đọc danh sách AI block.');
+  } finally {
+    if (router) await router.close();
   }
 };
 

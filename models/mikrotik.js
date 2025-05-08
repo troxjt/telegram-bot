@@ -53,7 +53,7 @@ async function processFirewallLists() {
             `=comment=AI Auto Block`
           ]);
 
-          console.log(`[AI Firewall] Blocked IP=${ip} with score=${score}`);
+          // console.log(`[AI Firewall] Blocked IP=${ip} with score=${score}`);
 
           // Send Telegram alert
           const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
