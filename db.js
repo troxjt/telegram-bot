@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
 const { db } = require('./config');
+const { logToFile } = require('./utils/log');
 
 let pool;
 
@@ -16,9 +17,9 @@ module.exports = {
                 connectionLimit: db.connectionLimit,
                 queueLimit: db.queueLimit
             });
-            // console.log('[DB] Kết nối thành công.');
+            logToFile('[DB] Kết nối thành công.');
         } catch (err) {
-            console.error(`[DB ERROR] Không thể tạo pool kết nối: ${err.message}`);
+            logToFile(`[DB ERROR] Không thể tạo pool kết nối: ${err.message}`);
             throw err;
         }
     },
@@ -28,7 +29,7 @@ module.exports = {
             const [results] = await pool.execute(sql, params);
             return results;
         } catch (err) {
-            console.error(`[DB ERROR] Truy vấn không thành công: ${err.message}`);
+            logToFile(`[DB ERROR] Truy vấn không thành công: ${err.message}`);
             throw err;
         }
     }

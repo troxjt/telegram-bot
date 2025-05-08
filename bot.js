@@ -1,18 +1,10 @@
-const fs = require('fs');
-const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const { telegram } = require('./config');
 const { initializeBotFeatures } = require('./features');
 const { monitorDevices, startWebServer } = require('./server');
 const { processFirewallLists } = require('./models/mikrotik');
+const { logToFile } = require('./utils/log');
 const db = require('./db');
-
-// Custom logging function
-function logToFile(message) {
-  const logFilePath = path.join(__dirname, 'app.log');
-  const timestamp = new Date().toISOString();
-  fs.appendFileSync(logFilePath, `[${timestamp}] ${message}\n`);
-}
 
 const bot = new TelegramBot(telegram.token, { polling: true });
 

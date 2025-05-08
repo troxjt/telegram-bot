@@ -1,5 +1,6 @@
 const { getConnection, releaseConnection } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
+const { logToFile } = require('../utils/log');
 
 const showAIMenu = (bot, chatId) => {
   const options = {
@@ -47,7 +48,7 @@ const showAIDefenseList = async (bot, chatId) => {
     }
 
   } catch (err) {
-    // console.error(`[ERROR] Failed to fetch AI block list: ${err.message}`);
+    logToFile(`[ERROR] Failed to fetch AI block list: ${err.message}`);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi đọc danh sách AI block.');
   } finally {
     if (router) releaseConnection(router);

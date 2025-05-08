@@ -1,5 +1,6 @@
 const { RouterOSAPI } = require('node-routeros');
 const { router, telegram } = require('../config');
+const { logToFile } = require('../utils/log');
 
 let connectionPool = [];
 
@@ -73,11 +74,11 @@ async function processFirewallLists() {
         }
       }
     }
-    console.log('[INFO] Firewall lists processed successfully.');
+    logToFile('[INFO] Firewall lists processed successfully.');
   } catch (err) {
-    console.error(`[ERROR] Failed to process firewall lists: ${err.message}`);
+    logToFile(`[ERROR] Failed to process firewall lists: ${err.message}`);
     if (err.errno) {
-      console.error(`[ERROR] RouterOS API error code: ${err.errno}`);
+      logToFile(`[ERROR] RouterOS API error code: ${err.errno}`);
     }
   } finally {
     if (routerConn) {

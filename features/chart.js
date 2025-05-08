@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { sendAndDeleteImg, sendAndDeleteMessage } = require('../utils/messageUtils');
+const { logToFile } = require('../utils/log');
 
 const generateBandwidthChart = async (bot, chatId) => {
   const path = './data/bandwidth.json';
@@ -16,7 +17,7 @@ const generateBandwidthChart = async (bot, chatId) => {
       data = JSON.parse(raw);
     }
   } catch (err) {
-    console.error('❌ Lỗi đọc dữ liệu bandwidth:', err);
+    logToFile('❌ Lỗi đọc dữ liệu bandwidth:', err);
     return sendAndDeleteMessage(bot, chatId, '⚠️ Không thể đọc dữ liệu biểu đồ.');
   }
 

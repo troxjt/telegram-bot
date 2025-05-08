@@ -1,5 +1,6 @@
 const { getConnection, releaseConnection } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
+const { logToFile } = require('../utils/log');
 
 const handleSystemInfo = async (bot, chatId) => {
   let router;
@@ -23,7 +24,7 @@ const handleSystemInfo = async (bot, chatId) => {
 
     sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
-    console.error('❌ Lỗi khi lấy thông tin hệ thống:', err.message);
+    logToFile('❌ Lỗi khi lấy thông tin hệ thống:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy thông tin hệ thống.');
   } finally {
     if (router) releaseConnection(router);
@@ -41,7 +42,7 @@ const handleListConnections = async (bot, chatId) => {
     sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
     releaseConnection(router);
   } catch (err) {
-    console.error('❌ Lỗi khi lấy danh sách kết nối:', err.message);
+    logToFile('❌ Lỗi khi lấy danh sách kết nối:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách kết nối.');
   }
 };
@@ -57,7 +58,7 @@ const handleInterfaceStatus = async (bot, chatId) => {
     });
     sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
   } catch (err) {
-    console.error('❌ Lỗi khi lấy trạng thái giao diện:', err.message);
+    logToFile('❌ Lỗi khi lấy trạng thái giao diện:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy trạng thái giao diện.');
   } finally {
     if (router) releaseConnection(router);

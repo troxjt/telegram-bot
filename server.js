@@ -5,6 +5,7 @@ const { getConnection } = require('./models/mikrotik');
 const { isWhitelisted } = require('./models/whitelist');
 const { isSuspicious, logSuspicious } = require('./models/suspicious');
 const { sendAlert } = require('./utils/messageUtils');
+const { logToFile } = require('./utils/log');
 const {
   limitBandwidth,
   trackConnection,
@@ -83,7 +84,7 @@ async function monitorDevices() {
             const clientId = device['client-id'] || null;
 
             if (!mac || !ip || !iface) {
-                console.warn(`[WARN] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
+                logToFile(`[WARN] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
                 continue;
             }
 
@@ -106,14 +107,14 @@ async function monitorDevices() {
         await cleanupTrustedDevices();
         // await monitorSuspiciousIPs();
     } catch (err) {
-        console.error('[ERROR] Giám sát thiết bị không thành công:', err.message);
+        logToFile('[ERROR] Giám sát thiết bị không thành công:', err.message);
     }
 }
 
 // Function to start the web server
 const startWebServer = (port = PORT) => {
     app.listen(port, () => {
-        // console.log(`[WEB] Server is running on http://localhost:${port}`);
+        logToFile(`[WEB] Server is running on http://localhost:${port}`);
     });
 };
 

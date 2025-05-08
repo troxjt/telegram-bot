@@ -1,3 +1,4 @@
+const { logToFile } = require('../utils/log');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { handleSystemInfo, handleListConnections, handleInterfaceStatus } = require('./system');
 const { handleBlacklist } = require('./blacklist');
@@ -75,7 +76,7 @@ const handleCallbackQuery = async (bot, cbq) => {
         return sendAndDeleteMessage(bot, chatId, '❌ Lệnh không hợp lệ.');
     }
   } catch (err) {
-    console.error('❌ Lỗi xử lý callback:', err);
+    logToFile('❌ Lỗi xử lý callback:', err);
     sendAndDeleteMessage(bot, chatId, '❌ Đã xảy ra lỗi khi xử lý yêu cầu.');
   }
 };

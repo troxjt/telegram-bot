@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { RouterOSAPI } = require('node-routeros');
 const { router } = require('./config');
+const { logToFile } = require('./utils/log');
 
 const routerAPI = new RouterOSAPI({
   host: router.host,
@@ -44,7 +45,7 @@ const collectBandwidth = async () => {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     await routerAPI.close();
   } catch (err) {
-    console.error('❌ Tracker error:', err.message);
+    logToFile('❌ Tracker error:', err.message);
   }
 };
 

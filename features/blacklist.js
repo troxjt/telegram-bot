@@ -1,5 +1,6 @@
 const { getConnection, releaseConnection } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
+const { logToFile } = require('../utils/log');
 
 const handleBlacklist = async (bot, chatId) => {
     let router;
@@ -37,7 +38,7 @@ const handleBlacklist = async (bot, chatId) => {
         }
 
     } catch (err) {
-        console.error('❌ Lỗi khi lấy danh sách address-list:', err);
+        logToFile('❌ Lỗi khi lấy danh sách address-list:', err);
         sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách blacklist.');
     } finally {
         if (router) releaseConnection(router);

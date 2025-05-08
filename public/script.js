@@ -1,3 +1,5 @@
+const { logToFile } = require('../utils/log');
+
 document.addEventListener('DOMContentLoaded', () => {
   const whitelistTable = document.getElementById('whitelistTableBody');
   const suspiciousTable = document.getElementById('suspiciousTableBody');
@@ -16,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Thiết bị đã được thêm vào danh sách tin cậy.');
       loadDevices();
     } catch (err) {
-      console.error('Error trusting device:', err);
+      logToFile('Error trusting device:', err);
     }
   };
 
@@ -26,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Thiết bị đã bị xóa.');
       loadDevices();
     } catch (err) {
-      console.error('Error removing device:', err);
+      logToFile('Error removing device:', err);
     }
   };
 
