@@ -1,5 +1,5 @@
 const db = require('../db');
-const { getConnection } = require('./mikrotik'); // Corrected import
+const { getConnection, safeWrite } = require('./mikrotik'); // Corrected import
 const { logToFile } = require('../utils/log');
 
 async function limitBandwidth(mac, ip, iface) {
@@ -8,13 +8,13 @@ async function limitBandwidth(mac, ip, iface) {
       throw new Error(`Invalid IP address format: ${ip}. Expected format: 'x.x.x.x/xx'`);
     }
 
-    const routerConn = await getConnection(); // Use getConnection instead of connect
+    const router = await getConnection(); // Use getConnection instead of connect
 
     // Check if the MAC is in the database
     const bandwidthlimitsCheck = await db.query('SELECT 1 FROM bandwidth_limits WHERE mac = ?', [mac]);
     if (bandwidthlimitsCheck.length === 0) {
       // Add new queue
-      await routerConn.write('/queue/simple/add', [
+      await safeWrite(router, '/queue/simple/add', [
         `=name=${mac}`,
         `=target=${ip}`,
         '=max-limit=100M/100M'
@@ -73,15 +73,15 @@ async function cleanupTrustedDevices() {
 
 async function monitorSuspiciousIPs() {
   try {
-    const routerConn = await getConnection(); // Use getConnection instead of connect
-    const addressLists = await routerConn.write('/ip/firewall/address-list/print');
+    const router = await getConnection(); // Use getConnection instead of connect
+    const addressLists = await safeWrite(router, '/ip/firewall/address-list/print');
 
     for (const entry of addressLists) {
       if (entry.list && entry.list.startsWith('ai_')) {
         const ip = entry.address;
         const isMalicious = await inspectIP(ip);
         if (isMalicious) {
-          await blockIP(ip, routerConn);
+          await blockIP(ip, router);
         }
       }
     }
@@ -95,12 +95,12 @@ async function inspectIP(ip) {
   return false;
 }
 
-async function blockIP(ip, routerConn = null) {
+async function blockIP(ip, router = null) {
   try {
-    if (!routerConn) {
-      routerConn = await getConnection();
+    if (!router) {
+      router = await getConnection();
     }
-    await routerConn.write('/ip/firewall/address-list/add', [
+    await safeWrite(router, '/ip/firewall/address-list/add', [
       `=list=ai_blacklist`,
       `=address=${ip}`,
       `=timeout=24h`,

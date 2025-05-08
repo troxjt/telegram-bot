@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const db = require('./db');
-const { getConnection } = require('./models/mikrotik');
+const { getConnection, releaseConnection, safeWrite } = require('./models/mikrotik');
 const { isWhitelisted } = require('./models/whitelist');
 const { isSuspicious, logSuspicious } = require('./models/suspicious');
 const { sendAlert } = require('./utils/messageUtils');
@@ -22,8 +22,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API to get connected devices
 app.get('/api/devices', async (req, res) => {
     try {
-        const routerConn = await getConnection();
-        const devices = await routerConn.write('/ip/arp/print');
+        const router = await getConnection();
+        const devices = await safeWrite(router, '/ip/arp/print');
 
         const whitelist = await db.query('SELECT mac FROM whitelist');
         const trustedMacs = new Set(whitelist.map(entry => entry.mac));
@@ -74,8 +74,8 @@ app.delete('/api/whitelist/:mac', async (req, res) => {
 // Function to monitor devices
 async function monitorDevices() {
     try {
-        const routerConn = await getConnection();
-        const devices = await routerConn.write('/ip/arp/print');
+        const router = await getConnection();
+        const devices = await safeWrite(router, '/ip/arp/print');
 
         for (const device of devices) {
             const mac = device['mac-address'];

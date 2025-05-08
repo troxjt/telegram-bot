@@ -1,4 +1,4 @@
-const { getConnection, releaseConnection } = require('../models/mikrotik');
+const { getConnection, releaseConnection, safeWrite } = require('./models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 
@@ -26,7 +26,7 @@ const showAIDefenseList = async (bot, chatId) => {
   let router;
   try {
     router = await getConnection();
-    const smartList = await router.write('/ip/firewall/address-list/print', ['?list=ai_blacklist']);
+    const smartList = await safeWrite(router, '/ip/firewall/address-list/print', ['?list=ai_blacklist']);
 
     if (smartList.length === 0) {
       return sendAndDeleteMessage(bot, chatId, '✅ Không có IP nào bị AI chặn.');

@@ -1,4 +1,4 @@
-const { getConnection, releaseConnection } = require('../models/mikrotik');
+const { getConnection, releaseConnection, safeWrite } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 
@@ -9,7 +9,7 @@ const handleBlacklist = async (bot, chatId) => {
 
     try {
         router = await getConnection();
-        const allEntries = await router.write('/ip/firewall/address-list/print');
+        const allEntries = await safeWrite(router, '/ip/firewall/address-list/print');
 
         if (!Array.isArray(allEntries) || allEntries.length === 0) {
             sendAndDeleteMessage(bot, chatId, '✅ Không có địa chỉ nào đang bị chặn.');

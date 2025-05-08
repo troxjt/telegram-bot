@@ -1,4 +1,4 @@
-const { getConnection, releaseConnection } = require('../models/mikrotik');
+const { getConnection, releaseConnection, safeWrite } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 
@@ -7,8 +7,8 @@ const handleSystemInfo = async (bot, chatId) => {
   try {
     router = await getConnection();
     const [res, identity] = await Promise.all([
-      router.write('/system/resource/print'),
-      router.write('/system/identity/print')
+      safeWrite(router, '/system/resource/print'),
+      safeWrite(router, '/system/identity/print')
     ]);
 
     const status = res[0];
@@ -34,7 +34,7 @@ const handleSystemInfo = async (bot, chatId) => {
 const handleListConnections = async (bot, chatId) => {
   try {
     const router = await getConnection();
-    const result = await router.write('/ip/arp/print');
+    const result = await safeWrite(router, '/ip/arp/print');
     let message = '🔌 *DANH SÁCH KẾT NỐI ARP:*\n\n';
     result.forEach((c, i) => {
       message += `🔹 ${i + 1}. IP: ${c.address}, MAC: ${c['mac-address']}\n`;
@@ -51,7 +51,7 @@ const handleInterfaceStatus = async (bot, chatId) => {
   let router;
   try {
     router = await getConnection();
-    const result = await router.write('/interface/print');
+    const result = await safeWrite(router, '/interface/print');
     let message = '🌐 *TRẠNG THÁI GIAO DIỆN:*\n\n';
     result.forEach((iface) => {
       message += `🔸 ${iface.name}: ${iface.running ? '✅ *Hoạt động*' : '❌ *Dừng*'}\n`;

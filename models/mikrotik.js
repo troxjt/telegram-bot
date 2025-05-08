@@ -31,6 +31,25 @@ function releaseConnection(api) {
   }
 }
 
+// Helper to safely call routerConn.write and handle !empty reply
+async function safeWrite(routerConn, command, params = []) {
+  try {
+    const res = await routerConn.write(command, params);
+    return res;
+  } catch (err) {
+    if (
+      err &&
+      err.errno === 'UNKNOWNREPLY' &&
+      err.message &&
+      err.message.includes('!empty')
+    ) {
+      // Return empty array if !empty reply
+      return [];
+    }
+    throw err;
+  }
+}
+
 async function processFirewallLists() {
   let routerConn;
   try {
@@ -40,27 +59,27 @@ async function processFirewallLists() {
     // Fetch IPs from address lists
     const lists = ['ai_port_scanner', 'ai_brute_force', 'ai_http_flood'];
     for (const list of lists) {
-      const entries = await routerConn.write('/ip/firewall/address-list/print', [`?list=${list}`]);
+      const entries = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=${list}`]);
       entries.forEach(entry => ipLists.add(entry.address));
     }
 
     for (const ip of ipLists) {
       let score = 0;
 
-      if (await routerConn.write('/ip/firewall/address-list/print', [`?list=ai_port_scanner`, `?address=${ip}`]).then(res => res.length > 0)) {
+      if (await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_port_scanner`, `?address=${ip}`]).then(res => res.length > 0)) {
         score += 30;
       }
-      if (await routerConn.write('/ip/firewall/address-list/print', [`?list=ai_brute_force`, `?address=${ip}`]).then(res => res.length > 0)) {
+      if (await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_brute_force`, `?address=${ip}`]).then(res => res.length > 0)) {
         score += 40;
       }
-      if (await routerConn.write('/ip/firewall/address-list/print', [`?list=ai_http_flood`, `?address=${ip}`]).then(res => res.length > 0)) {
+      if (await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_http_flood`, `?address=${ip}`]).then(res => res.length > 0)) {
         score += 30;
       }
 
       if (score >= 60) {
-        const alreadyBlocked = await routerConn.write('/ip/firewall/address-list/print', [`?list=ai_blacklist`, `?address=${ip}`]).then(res => res.length > 0);
+        const alreadyBlocked = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_blacklist`, `?address=${ip}`]).then(res => res.length > 0);
         if (!alreadyBlocked) {
-          await routerConn.write('/ip/firewall/address-list/add', [
+          await safeWrite(routerConn, '/ip/firewall/address-list/add', [
             `=list=ai_blacklist`,
             `=address=${ip}`,
             `=timeout=24h`,
@@ -87,4 +106,4 @@ async function processFirewallLists() {
   }
 }
 
-module.exports = { getConnection, releaseConnection, processFirewallLists };
+module.exports = { getConnection, releaseConnection, safeWrite, processFirewallLists };
