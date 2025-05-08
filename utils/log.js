@@ -20,7 +20,7 @@ function logToFile(message) {
 
         fs.appendFileSync(logFilePath, `[${timestamp}] ${message}\n`);
     } catch (err) {
-        logToFile(`[LOG ERROR] Failed to write log: ${err.message}`);
+        logToFile(`[LỖI] Không ghi nhật ký: ${err.message}`);
     }
 }
 

@@ -8,7 +8,7 @@ async function limitBandwidth(mac, ip, iface) {
   await safeWrite(router, '/queue/simple/add', [
     `=name=${mac}`,
     `=target=${ip}`,
-    '=max-limit=100M/100M',
+    '=max-limit=80M/80M',
     `=comment=AI Firewall`
   ]);
 
@@ -40,7 +40,7 @@ async function trackConnection(mac, ip, iface) {
       await limitBandwidth(mac, ip, iface);
     }
   } catch (err) {
-    logToFile(`[ERROR] Failed to track connection for MAC=${mac}: ${err.message}`);
+    logToFile(`[LỖI] Không theo dõi kết nối cho MAC=${mac}: ${err.message}`);
     throw err;
   }
 }
@@ -51,7 +51,7 @@ async function cleanupTrustedDevices() {
       'DELETE FROM whitelist WHERE mac NOT IN (SELECT mac FROM connection_logs WHERE connection_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY))'
     );
   } catch (err) {
-    logToFile(`[ERROR] Không thể dọn dẹp các thiết bị đáng tin cậy: ${err.message}`);
+    logToFile(`[LỖI] Không thể dọn dẹp các thiết bị đáng tin cậy: ${err.message}`);
     throw err;
   }
 }
@@ -72,7 +72,7 @@ async function monitorSuspiciousIPs() {
       }
     };
   } catch (err) {
-    logToFile(`[ERROR] Failed to monitor suspicious IPs: ${err.message}`);
+    logToFile(`[LỖI] Không theo dõi IPS đáng ngờ: ${err.message}`);
     throw err;
   }
 }

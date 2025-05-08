@@ -1,7 +1,7 @@
 const { connect, safeWrite } = require('./models/mikrotik');
 const { isWhitelisted } = require('./models/whitelist');
 const { isSuspicious, logSuspicious } = require('./models/suspicious');
-const { sendAlert } = require('./utils/messageUtils');
+const { GuiThongBaoTele } = require('./utils/messageUtils');
 const { logToFile } = require('./utils/log');
 const {
   limitBandwidth,
@@ -24,7 +24,7 @@ async function monitorDevices() {
         const clientId = device['client-id'] || null;
 
         if (!mac || !ip || !iface) {
-          // logToFile(`[WARN] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
+          // logToFile(`[CẢNH BÁO] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
           continue;
         }
 
@@ -33,10 +33,12 @@ async function monitorDevices() {
           isSuspicious(mac)
         ]);
 
+        
         if (!isWhiteListed && !isMarkedSuspicious) {
+          const alertMessage = `[BÁO ĐỘNG] Thiết bị không có trong whitelist:\nMAC: ${mac}\nIP: ${ip}\nInterface: ${iface}`
           await Promise.all([
             logSuspicious(mac, ip, iface, clientId),
-            sendAlert(mac, ip, iface),
+            GuiThongBaoTele(alertMessage),
             limitBandwidth(mac, `${ip}/32`, iface)
           ]);
         }
@@ -47,10 +49,10 @@ async function monitorDevices() {
       await cleanupTrustedDevices();
       // await monitorSuspiciousIPs();
 
-      logToFile('[INFO] Giám sát thiết bị thành công.');
+      logToFile('[THÔNG TIN] Giám sát thiết bị thành công.');
     };
   } catch (err) {
-    logToFile('[ERROR] Giám sát thiết bị không thành công:', err.message);
+    logToFile('[LỖI] Giám sát thiết bị không thành công:', err.message);
   }
 }
 
@@ -92,17 +94,15 @@ async function processFirewallLists() {
     
             // Send Telegram alert
             const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
-            const url = `https://api.telegram.org/bot${telegram.token}/sendMessage?chat_id=${telegram.chatId}&text=${encodeURIComponent(text)}`;
-            await fetch(url);
-
-            logToFile(`[ALERT] Đã chặn IP nguy hiểm: ${ip} với điểm ${score}`);
+            await GuiThongBaoTele(text);
+            logToFile(`[BÁO ĐỘNG] Đã chặn IP nguy hiểm: ${ip} với điểm ${score}`);
           }
         }
       }
     }
-    // logToFile('[INFO] Danh sách tường lửa được xử lý thành công.');
+    // logToFile('[THÔNG TIN] Danh sách tường lửa được xử lý thành công.');
   } catch (err) {
-    logToFile(`[ERROR] Không xử lý danh sách tường lửa: ${err.message}`);
+    logToFile(`[LỖI] Không xử lý danh sách tường lửa: ${err.message}`);
   }
 }
 

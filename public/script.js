@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Thiết bị đã được thêm vào danh sách tin cậy.');
       loadDevices();
     } catch (err) {
-      logToFile('Error trusting device:', err);
+      logToFile('Thiết bị tin cậy lỗi:', err);
     }
   };
 
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Thiết bị đã bị xóa.');
       loadDevices();
     } catch (err) {
-      logToFile('Error removing device:', err);
+      logToFile('Loại bỏ thiết bị:', err);
     }
   };
 

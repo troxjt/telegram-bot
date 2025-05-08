@@ -31,16 +31,14 @@ const sendAndDeleteImg = (bot, chatId, photo, options = {}) => {
   return sendAndDelete(bot.sendPhoto.bind(bot), bot, chatId, photo, options, deleteDelay);
 };
 
-const sendAlert = async (mac, ip, iface) => {
-  const alertMessage = `[ALERT] Thiết bị không có trong whitelist:\nMAC: ${mac}\nIP: ${ip}\nInterface: ${iface}`;
+const GuiThongBaoTele = async (alertMessage) => {
   try {
     const text = alertMessage;
     const url = `https://api.telegram.org/bot${telegram.token}/sendMessage?chat_id=${telegram.chatId}&text=${encodeURIComponent(text)}`;
     await fetch(url);
-    logToFile(`[NOTIFY] Đã gửi cảnh báo qua Telegram: MAC=${mac}, IP=${ip}`);
   } catch (err) {
-    logToFile(`[LỖI] Không thể gửi cảnh báo qua Telegram: ${err.message}`);
+    // logToFile(`[LỖI] Không thể gửi cảnh báo qua Telegram: ${err.message}`);
   }
 };
 
-module.exports = { sendAndDeleteMessage, sendAndDeleteImg, sendAlert };
+module.exports = { sendAndDeleteMessage, sendAndDeleteImg, GuiThongBaoTele };

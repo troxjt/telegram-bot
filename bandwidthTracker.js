@@ -45,7 +45,7 @@ const collectBandwidth = async () => {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     await routerAPI.close();
   } catch (err) {
-    logToFile('❌ Tracker error:', err.message);
+    logToFile('❌ Lỗi theo dõi:', err.message);
   }
 };
 

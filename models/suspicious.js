@@ -9,7 +9,7 @@ async function logSuspicious(mac, ip, iface, clientId) {
     );
 
     if (exists.length > 0) {
-      logToFile(`[INFO] Thiết bị đã được ghi lại: MAC=${mac}, IP=${ip}, Interface=${iface}`);
+      // logToFile(`[THÔNG TIN] Thiết bị đã được ghi lại: MAC=${mac}, IP=${ip}, Interface=${iface}`);
       return;
     }
 
@@ -17,7 +17,7 @@ async function logSuspicious(mac, ip, iface, clientId) {
       'INSERT INTO suspicious_devices (mac, ip, interface, client_id) VALUES (?, ?, ?, ?)',
       [mac, ip, iface, clientId]
     );
-    logToFile(`[LOG] Suspicious device logged: MAC=${mac}, IP=${ip}, Interface=${iface}, Client-ID=${clientId}`);
+    logToFile(`[THÔNG TIN] Thiết bị đáng ngờ đã ghi lại: MAC=${mac}, IP=${ip}, Interface=${iface}, Client-ID=${clientId}`);
   } catch (err) {
     logToFile(`[LỖI] Không đăng nhập thiết bị đáng ngờ: ${err.message}`);
     throw err;

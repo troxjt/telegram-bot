@@ -48,7 +48,7 @@ const showAIDefenseList = async (bot, chatId) => {
       }
     };
   } catch (err) {
-    logToFile(`[ERROR] Failed to fetch AI block list: ${err.message}`);
+    logToFile(`[LỖI] Failed to fetch AI block list: ${err.message}`);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi đọc danh sách AI block.');
   }
 };
