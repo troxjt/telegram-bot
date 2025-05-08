@@ -5,24 +5,29 @@ let connection;
 
 async function connect() {
   if (!connection) {
+    console.log(1111111111111111)
     connection = new RouterOSAPI({
       host: router.host,
       user: router.user,
       password: router.password,
       port: router.port,
-      timeout: 30000
+      timeout: 60000
     });
+    console.log(2222222222222)
     await connection.connect();
-    return connection.menu('/'); // ✅ quan trọng: trả về router.menu('/')
+    console.log(33333333333333)
+    return connection;
+  } else {
+    console.log(44444444444444)
+    return connection;
   }
-  return connection;
 }
 
 async function processFirewallLists() {
   try {
     const routerConn = await connect();
     const ipLists = new Set();
-
+    
     // Fetch IPs from address lists
     const lists = ['ai_port_scanner', 'ai_brute_force', 'ai_http_flood'];
     for (const list of lists) {
@@ -31,6 +36,7 @@ async function processFirewallLists() {
     }
 
     for (const ip of ipLists) {
+      console.log(ip)
       let score = 0;
 
       if (await routerConn.write('/ip/firewall/address-list/print', [`?list=ai_port_scanner`, `?address=${ip}`]).then(res => res.length > 0)) {
@@ -62,6 +68,7 @@ async function processFirewallLists() {
         }
       }
     }
+    await routerConn.close();
   } catch (err) {
     console.error(`[ERROR] Failed to process firewall lists: ${err.message}`);
     throw err;

@@ -1,34 +1,54 @@
+const fs = require('fs');
+const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const { telegram } = require('./config');
 const { initializeBotFeatures } = require('./features');
 const { monitorDevices, startWebServer } = require('./server');
 const { processFirewallLists } = require('./models/mikrotik');
+const { connect } = require('./models/mikrotik');
 const db = require('./db');
+
+// Custom logging function
+function logToFile(message) {
+  const logFilePath = path.join(__dirname, 'app.log');
+  const timestamp = new Date().toISOString();
+  fs.appendFileSync(logFilePath, `[${timestamp}] ${message}\n`);
+}
 
 const bot = new TelegramBot(telegram.token, { polling: true });
 
-// Initialize periodic device monitoring
-monitorDevices();
-setInterval(monitorDevices, 10000);
+// // Initialize periodic device monitoring
+// monitorDevices();
+// setInterval(monitorDevices, 60000);
 
-// Schedule firewall list processing
-processFirewallLists();
-setInterval(processFirewallLists, 10000);
+// // Schedule firewall list processing
+// processFirewallLists();
+// setInterval(processFirewallLists, 60000);
+
+async function testConnection() {
+  try {
+    const routerConn = await connect();
+    if (!routerConn.connected) {
+      throw new Error('Không thể kết nối đến RouterOS.');
+    }
+
+    const response = await routerConn.write('/system/identity/print');
+    logToFile(`Router Identity: ${JSON.stringify(response)}`);
+  } catch (err) {
+    logToFile(`Connection test failed: ${err.message}`);
+  }
+}
+
+testConnection();
 
 (async () => {
   try {
-    // console.log('[INIT] Kết nối với cơ sở dữ liệu ...');
     await db.connect();
-
-    // console.log('[WEB] Bắt đầu máy chủ web ...');
     startWebServer(3000);
-
-    // console.log('[BOT] Khởi tạo các tính năng bot ...');
     initializeBotFeatures(bot);
-
-    // console.log('[BOT] Bot Telegram đã sẵn sàng.');
+    logToFile('Bot Telegram đã sẵn sàng.');
   } catch (err) {
-    console.error('[LỖI] Không thể bắt đầu bot:', err.message);
+    logToFile(`Không thể bắt đầu bot: ${err.message}`);
     process.exit(1);
   }
 })();

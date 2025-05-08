@@ -19,7 +19,7 @@
     "mysql2": "^3.14.1",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
-    "node-routeros": "^1.6.8",
+    "node-routeros": "^1.6.9",
     "node-telegram-bot-api": "^0.66.0"
   }
 }
