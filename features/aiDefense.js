@@ -1,4 +1,4 @@
-const { getConnection, releaseConnection, safeWrite } = require('./models/mikrotik');
+const { getConnection, releaseConnection, safeWrite } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 
