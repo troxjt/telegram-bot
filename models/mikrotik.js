@@ -1,33 +1,41 @@
 const { RouterOSAPI } = require('node-routeros');
 const { router, telegram } = require('../config');
 
-let connection;
+let connectionPool = [];
 
-async function connect() {
-  if (!connection) {
-    console.log(1111111111111111)
-    connection = new RouterOSAPI({
-      host: router.host,
-      user: router.user,
-      password: router.password,
-      port: router.port,
-      timeout: 60000
-    });
-    console.log(2222222222222)
-    await connection.connect();
-    console.log(33333333333333)
-    return connection;
-  } else {
-    console.log(44444444444444)
-    return connection;
+async function getConnection() {
+  const availableConnection = connectionPool.find(conn => !conn.inUse);
+  if (availableConnection) {
+    availableConnection.inUse = true;
+    return availableConnection.api;
+  }
+
+  const newConnection = new RouterOSAPI({
+    host: router.host,
+    user: router.user,
+    password: router.password,
+    port: router.port,
+    timeout: 60000
+  });
+
+  await newConnection.connect();
+  connectionPool.push({ api: newConnection, inUse: true });
+  return newConnection;
+}
+
+function releaseConnection(api) {
+  const connection = connectionPool.find(conn => conn.api === api);
+  if (connection) {
+    connection.inUse = false;
   }
 }
 
 async function processFirewallLists() {
+  let routerConn;
   try {
-    const routerConn = await connect();
+    routerConn = await getConnection();
     const ipLists = new Set();
-    
+
     // Fetch IPs from address lists
     const lists = ['ai_port_scanner', 'ai_brute_force', 'ai_http_flood'];
     for (const list of lists) {
@@ -36,7 +44,6 @@ async function processFirewallLists() {
     }
 
     for (const ip of ipLists) {
-      console.log(ip)
       let score = 0;
 
       if (await routerConn.write('/ip/firewall/address-list/print', [`?list=ai_port_scanner`, `?address=${ip}`]).then(res => res.length > 0)) {
@@ -59,8 +66,6 @@ async function processFirewallLists() {
             `=comment=AI Auto Block`
           ]);
 
-          // console.log(`[AI Firewall] Blocked IP=${ip} with score=${score}`);
-
           // Send Telegram alert
           const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
           const url = `https://api.telegram.org/bot${telegram.token}/sendMessage?chat_id=${telegram.chatId}&text=${encodeURIComponent(text)}`;
@@ -68,11 +73,12 @@ async function processFirewallLists() {
         }
       }
     }
-    await routerConn.close();
   } catch (err) {
     console.error(`[ERROR] Failed to process firewall lists: ${err.message}`);
     throw err;
+  } finally {
+    if (routerConn) releaseConnection(routerConn);
   }
 }
 
-module.exports = { connect, processFirewallLists };
+module.exports = { getConnection, releaseConnection, processFirewallLists };

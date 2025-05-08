@@ -17,13 +17,13 @@ function logToFile(message) {
 
 const bot = new TelegramBot(telegram.token, { polling: true });
 
-// // Initialize periodic device monitoring
-// monitorDevices();
-// setInterval(monitorDevices, 60000);
+// Initialize periodic device monitoring
+monitorDevices();
+setInterval(monitorDevices, 60000);
 
-// // Schedule firewall list processing
-// processFirewallLists();
-// setInterval(processFirewallLists, 60000);
+// Schedule firewall list processing
+processFirewallLists();
+setInterval(processFirewallLists, 60000);
 
 async function testConnection() {
   try {

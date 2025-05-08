@@ -1,4 +1,4 @@
-const { connect } = require('../models/mikrotik');
+const { getConnection, releaseConnection } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 
 const showAIMenu = (bot, chatId) => {
@@ -22,8 +22,9 @@ const showAIMenu = (bot, chatId) => {
 };
 
 const showAIDefenseList = async (bot, chatId) => {
+  let router;
   try {
-    const router = await connect(); // Ensure connection to RouterOS
+    router = await getConnection();
     const smartList = await router.write('/ip/firewall/address-list/print', ['?list=ai_blacklist']);
 
     if (smartList.length === 0) {
@@ -49,7 +50,7 @@ const showAIDefenseList = async (bot, chatId) => {
     // console.error(`[ERROR] Failed to fetch AI block list: ${err.message}`);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi đọc danh sách AI block.');
   } finally {
-    if (router) await router.close();
+    if (router) releaseConnection(router);
   }
 };
 
