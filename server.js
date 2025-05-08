@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const db = require('./db');
-const { getConnection } = require('./mikrotik'); // Corrected import
+const { getConnection } = require('./models/mikrotik');
 const { isWhitelisted } = require('./models/whitelist');
 const { isSuspicious, logSuspicious } = require('./models/suspicious');
 const { sendAlert } = require('./utils/messageUtils');
