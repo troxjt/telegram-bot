@@ -44,12 +44,12 @@ async function trackConnection(mac, ip, iface) {
   try {
     const result = await db.query('SELECT days_connected FROM connection_logs WHERE mac = ?', [mac]);
     if (result.length > 0) {
-      if (result[0].days_connected >= 7) {
-        const suspiciousdevicescheck = await db.query('SELECT 1 FROM suspicious_devices WHERE mac = ?', [mac]);
-        if (suspiciousdevicescheck.length > 0) {
-          db.query('DELETE FROM suspicious_devices WHERE mac = ?', [mac]);
-        }
-      } else {
+      // if (result[0].days_connected >= 7) {
+      //   const suspiciousdevicescheck = await db.query('SELECT 1 FROM suspicious_devices WHERE mac = ?', [mac]);
+      //   if (suspiciousdevicescheck.length > 0) {
+      //     db.query('DELETE FROM suspicious_devices WHERE mac = ?', [mac]);
+      //   }
+      // } else {
         const connectionDateCheck = await db.query(
           'SELECT connection_date FROM connection_logs WHERE mac = ?',
           [mac]
@@ -64,7 +64,7 @@ async function trackConnection(mac, ip, iface) {
             await db.query('UPDATE connection_logs SET days_connected = days_connected + 1, connection_date = CURDATE() WHERE mac = ?', [mac]);
           }
         }
-      }
+      // }
     } else {
       await db.query('INSERT INTO connection_logs (mac, connection_date) VALUES (?, CURDATE()) ON DUPLICATE KEY UPDATE connection_date = VALUES(connection_date)', [mac]);
       await limitBandwidth(mac, ip, iface);
