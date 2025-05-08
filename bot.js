@@ -23,12 +23,15 @@ setInterval(async () => {
 
 (async () => {
   try {
+    logToFile('[INIT] Kết nối với cơ sở dữ liệu ...');
     await db.connect();
+    logToFile('[WEB] Bắt đầu máy chủ web ...');
     startWebServer(3000);
+    logToFile('[BOT] Khởi tạo các tính năng bot ...');
     initializeBotFeatures(bot);
-    logToFile('Bot Telegram đã sẵn sàng.');
+    logToFile('[BOT] Bot Telegram đã sẵn sàng.');
   } catch (err) {
-    logToFile(`Không thể bắt đầu bot: ${err.message}`);
+    logToFile('[LỖI] Không thể bắt đầu bot:', err.message);
     process.exit(1);
   }
 })();
