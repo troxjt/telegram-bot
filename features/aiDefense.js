@@ -27,26 +27,26 @@ const showAIDefenseList = async (bot, chatId) => {
   try {
     router = await getConnection();
     const smartList = await safeWrite(router, '/ip/firewall/address-list/print', ['?list=ai_blacklist']);
-
-    if (smartList.length === 0) {
-      return sendAndDeleteMessage(bot, chatId, '✅ Không có IP nào bị AI chặn.');
-    }
-
-    const MAX_MESSAGE_LENGTH = 4000;
-    let msg = '🧠 *DANH SÁCH AI BLOCKED:*\n\n';
-    smartList.forEach((e, i) => {
-      const entry = `🔹 ${i + 1}. ${e.address} (${e.comment || 'No comment'})\n`;
-      if ((msg + entry).length > MAX_MESSAGE_LENGTH) {
-        sendAndDeleteMessage(bot, chatId, msg, { parse_mode: 'Markdown' });
-        msg = '';
+    if (smartList.length > 0) {
+      if (smartList.length === 0) {
+        return sendAndDeleteMessage(bot, chatId, '✅ Không có IP nào bị AI chặn.');
       }
-      msg += entry;
-    });
 
-    if (msg) {
-      sendAndDeleteMessage(bot, chatId, msg, { parse_mode: 'Markdown' });
-    }
+      const MAX_MESSAGE_LENGTH = 4000;
+      let msg = '🧠 *DANH SÁCH AI BLOCKED:*\n\n';
+      smartList.forEach((e, i) => {
+        const entry = `🔹 ${i + 1}. ${e.address} (${e.comment || 'No comment'})\n`;
+        if ((msg + entry).length > MAX_MESSAGE_LENGTH) {
+          sendAndDeleteMessage(bot, chatId, msg, { parse_mode: 'Markdown' });
+          msg = '';
+        }
+        msg += entry;
+      });
 
+      if (msg) {
+        sendAndDeleteMessage(bot, chatId, msg, { parse_mode: 'Markdown' });
+      }
+    };
   } catch (err) {
     logToFile(`[ERROR] Failed to fetch AI block list: ${err.message}`);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi đọc danh sách AI block.');

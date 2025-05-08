@@ -24,16 +24,17 @@ app.get('/api/devices', async (req, res) => {
     try {
         const router = await getConnection();
         const devices = await safeWrite(router, '/ip/arp/print');
+        if (devices.length > 0) {
+            const whitelist = await db.query('SELECT mac FROM whitelist');
+            const trustedMacs = new Set(whitelist.map(entry => entry.mac));
 
-        const whitelist = await db.query('SELECT mac FROM whitelist');
-        const trustedMacs = new Set(whitelist.map(entry => entry.mac));
-
-        res.json(devices.map(device => ({
-            mac: device['mac-address'],
-            ip: device['address'],
-            interface: device['interface'],
-            isTrusted: trustedMacs.has(device['mac-address'])
-        })));
+            res.json(devices.map(device => ({
+                mac: device['mac-address'],
+                ip: device['address'],
+                interface: device['interface'],
+                isTrusted: trustedMacs.has(device['mac-address'])
+            })));
+        };
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -76,36 +77,37 @@ async function monitorDevices() {
     try {
         const router = await getConnection();
         const devices = await safeWrite(router, '/ip/arp/print');
+        if (devices.length > 0) {
+            for (const device of devices) {
+                const mac = device['mac-address'];
+                const ip = device['address'];
+                const iface = device['interface'];
+                const clientId = device['client-id'] || null;
 
-        for (const device of devices) {
-            const mac = device['mac-address'];
-            const ip = device['address'];
-            const iface = device['interface'];
-            const clientId = device['client-id'] || null;
+                if (!mac || !ip || !iface) {
+                    logToFile(`[WARN] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
+                    continue;
+                }
 
-            if (!mac || !ip || !iface) {
-                logToFile(`[WARN] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
-                continue;
-            }
-
-            const [isWhiteListed, isMarkedSuspicious] = await Promise.all([
-                isWhitelisted(mac),
-                isSuspicious(mac)
-            ]);
-
-            if (!isWhiteListed && !isMarkedSuspicious) {
-                await Promise.all([
-                    logSuspicious(mac, ip, iface, clientId),
-                    sendAlert(mac, ip, iface),
-                    limitBandwidth(mac, `${ip}/32`, iface) // Ensure IP is formatted with subnet mask
+                const [isWhiteListed, isMarkedSuspicious] = await Promise.all([
+                    isWhitelisted(mac),
+                    isSuspicious(mac)
                 ]);
+
+                if (!isWhiteListed && !isMarkedSuspicious) {
+                    await Promise.all([
+                        logSuspicious(mac, ip, iface, clientId),
+                        sendAlert(mac, ip, iface),
+                        limitBandwidth(mac, `${ip}/32`, iface) // Ensure IP is formatted with subnet mask
+                    ]);
+                }
+
+                await trackConnection(mac, `${ip}/32`, iface);
             }
 
-            await trackConnection(mac, `${ip}/32`, iface);
-        }
-
-        await cleanupTrustedDevices();
-        // await monitorSuspiciousIPs();
+            await cleanupTrustedDevices();
+            // await monitorSuspiciousIPs();
+        };
     } catch (err) {
         logToFile('[ERROR] Giám sát thiết bị không thành công:', err.message);
     }

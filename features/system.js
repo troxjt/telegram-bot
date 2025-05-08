@@ -35,12 +35,14 @@ const handleListConnections = async (bot, chatId) => {
   try {
     const router = await getConnection();
     const result = await safeWrite(router, '/ip/arp/print');
-    let message = '🔌 *DANH SÁCH KẾT NỐI ARP:*\n\n';
-    result.forEach((c, i) => {
-      message += `🔹 ${i + 1}. IP: ${c.address}, MAC: ${c['mac-address']}\n`;
-    });
-    sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
-    releaseConnection(router);
+    if (result.length > 0) {
+      let message = '🔌 *DANH SÁCH KẾT NỐI ARP:*\n\n';
+      result.forEach((c, i) => {
+        message += `🔹 ${i + 1}. IP: ${c.address}, MAC: ${c['mac-address']}\n`;
+      });
+      sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
+      releaseConnection(router);
+    };
   } catch (err) {
     logToFile('❌ Lỗi khi lấy danh sách kết nối:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách kết nối.');
@@ -52,11 +54,13 @@ const handleInterfaceStatus = async (bot, chatId) => {
   try {
     router = await getConnection();
     const result = await safeWrite(router, '/interface/print');
-    let message = '🌐 *TRẠNG THÁI GIAO DIỆN:*\n\n';
-    result.forEach((iface) => {
-      message += `🔸 ${iface.name}: ${iface.running ? '✅ *Hoạt động*' : '❌ *Dừng*'}\n`;
-    });
-    sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
+    if (result.length > 0) {
+      let message = '🌐 *TRẠNG THÁI GIAO DIỆN:*\n\n';
+      result.forEach((iface) => {
+        message += `🔸 ${iface.name}: ${iface.running ? '✅ *Hoạt động*' : '❌ *Dừng*'}\n`;
+      });
+      sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
+    };
   } catch (err) {
     logToFile('❌ Lỗi khi lấy trạng thái giao diện:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy trạng thái giao diện.');

@@ -75,16 +75,17 @@ async function monitorSuspiciousIPs() {
   try {
     const router = await getConnection(); // Use getConnection instead of connect
     const addressLists = await safeWrite(router, '/ip/firewall/address-list/print');
-
-    for (const entry of addressLists) {
-      if (entry.list && entry.list.startsWith('ai_')) {
-        const ip = entry.address;
-        const isMalicious = await inspectIP(ip);
-        if (isMalicious) {
-          await blockIP(ip, router);
+    if (addressLists.length > 0) {
+      for (const entry of addressLists) {
+        if (entry.list && entry.list.startsWith('ai_')) {
+          const ip = entry.address;
+          const isMalicious = await inspectIP(ip);
+          if (isMalicious) {
+            await blockIP(ip, router);
+          }
         }
       }
-    }
+    };
   } catch (err) {
     logToFile(`[ERROR] Failed to monitor suspicious IPs: ${err.message}`);
     throw err;
