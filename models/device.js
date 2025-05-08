@@ -1,35 +1,21 @@
 const db = require('../db');
-const { getConnection, safeWrite } = require('./mikrotik'); // Corrected import
+const { connect, safeWrite } = require('./mikrotik');
 const { logToFile } = require('../utils/log');
 
 async function limitBandwidth(mac, ip, iface) {
-  try {
-    if (!ip.includes('/')) {
-      throw new Error(`Invalid IP address format: ${ip}. Expected format: 'x.x.x.x/xx'`);
-    }
+  const router = await connect();
+  const name = `limit_${mac.replace(/:/g, '')}`;
 
-    const router = await getConnection(); // Use getConnection instead of connect
+  await safeWrite(router, '/queue/simple/add', [
+    `=name=${name}`,
+    `=target=${ip}`,
+    `=max-limit=512k/1M`,
+    `=comment=Limited by AI`
+  ]);
 
-    // Check if the MAC is in the database
-    const bandwidthlimitsCheck = await db.query('SELECT 1 FROM bandwidth_limits WHERE mac = ?', [mac]);
-    if (bandwidthlimitsCheck.length === 0) {
-      // Add new queue
-      await safeWrite(router, '/queue/simple/add', [
-        `=name=${mac}`,
-        `=target=${ip}`,
-        '=max-limit=100M/100M'
-      ]);
-
-      // Log to database
-      await db.query(
-        'INSERT INTO bandwidth_limits (mac, ip, interface, limited_date) VALUES (?, ?, ?, NOW())',
-        [mac, ip, iface]
-      );
-    }
-  } catch (err) {
-    logToFile(`[ERROR] Failed to limit bandwidth for MAC=${mac}: ${err.message}`);
-    throw err;
-  }
+  await db.query('INSERT INTO bandwidth_limits (mac, ip, interface, limited_date) VALUES (?, ?, ?, NOW())', [mac, ip, iface]);
+  
+  logToFile(`[MikroTik] 🚦 Đã giới hạn băng thông cho ${mac} (${ip})`);
 }
 
 async function trackConnection(mac, ip, iface) {
@@ -73,7 +59,7 @@ async function cleanupTrustedDevices() {
 
 async function monitorSuspiciousIPs() {
   try {
-    const router = await getConnection(); // Use getConnection instead of connect
+    const router = await connect(); // Use connect instead of connect
     const addressLists = await safeWrite(router, '/ip/firewall/address-list/print');
     if (addressLists.length > 0) {
       for (const entry of addressLists) {
@@ -96,26 +82,28 @@ async function inspectIP(ip) {
   return false;
 }
 
-async function blockIP(ip, router = null) {
-  try {
-    if (!router) {
-      router = await getConnection();
-    }
+// Chặn IP vào danh sách
+async function blockIp(ip, comment = 'Blocked by AI') {
+  const router = await connect();
+  const exists = await safeWrite(router, '/ip/firewall/address-list/print', [
+    `?address=${ip}`,
+    `?list=ai_blacklist`
+  ]);
+  if (exists.length === 0) {
     await safeWrite(router, '/ip/firewall/address-list/add', [
-      `=list=ai_blacklist`,
       `=address=${ip}`,
-      `=timeout=24h`,
-      `=comment=AI Auto Block`
+      `=list=ai_blacklist`,
+      `=comment=${comment}`
     ]);
-
     await db.query('INSERT INTO blocked_ips (ip, blocked_date) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE blocked_date = NOW()', [ip]);
-  } catch (err) {
-    logToFile(`[ERROR] Failed to block IP=${ip}: ${err.message}`);
-    throw err;
+    logToFile(`[MikroTik] 🚫 IP ${ip} đã bị chặn.`);
+  } else {
+    logToFile(`[MikroTik] ⚠️ IP ${ip} đã có trong danh sách chặn.`);
   }
 }
 
 module.exports = {
+  blockIp,
   limitBandwidth,
   trackConnection,
   cleanupTrustedDevices,

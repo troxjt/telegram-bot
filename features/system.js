@@ -1,11 +1,11 @@
-const { getConnection, releaseConnection, safeWrite } = require('../models/mikrotik');
+const { connect, safeWrite } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 
 const handleSystemInfo = async (bot, chatId) => {
   let router;
   try {
-    router = await getConnection();
+    router = await connect();
     const [res, identity] = await Promise.all([
       safeWrite(router, '/system/resource/print'),
       safeWrite(router, '/system/identity/print')
@@ -26,14 +26,12 @@ const handleSystemInfo = async (bot, chatId) => {
   } catch (err) {
     logToFile('❌ Lỗi khi lấy thông tin hệ thống:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy thông tin hệ thống.');
-  } finally {
-    if (router) releaseConnection(router);
   }
 };
 
 const handleListConnections = async (bot, chatId) => {
   try {
-    const router = await getConnection();
+    const router = await connect();
     const result = await safeWrite(router, '/ip/arp/print');
     if (result.length > 0) {
       let message = '🔌 *DANH SÁCH KẾT NỐI ARP:*\n\n';
@@ -41,7 +39,6 @@ const handleListConnections = async (bot, chatId) => {
         message += `🔹 ${i + 1}. IP: ${c.address}, MAC: ${c['mac-address']}\n`;
       });
       sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
-      releaseConnection(router);
     };
   } catch (err) {
     logToFile('❌ Lỗi khi lấy danh sách kết nối:', err.message);
@@ -52,7 +49,7 @@ const handleListConnections = async (bot, chatId) => {
 const handleInterfaceStatus = async (bot, chatId) => {
   let router;
   try {
-    router = await getConnection();
+    router = await connect();
     const result = await safeWrite(router, '/interface/print');
     if (result.length > 0) {
       let message = '🌐 *TRẠNG THÁI GIAO DIỆN:*\n\n';
@@ -64,8 +61,6 @@ const handleInterfaceStatus = async (bot, chatId) => {
   } catch (err) {
     logToFile('❌ Lỗi khi lấy trạng thái giao diện:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy trạng thái giao diện.');
-  } finally {
-    if (router) releaseConnection(router);
   }
 };
 

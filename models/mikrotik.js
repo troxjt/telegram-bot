@@ -2,114 +2,29 @@ const { RouterOSAPI } = require('node-routeros');
 const { router, telegram } = require('../config');
 const { logToFile } = require('../utils/log');
 
-let connectionPool = [];
-
-async function getConnection() {
-  const availableConnection = connectionPool.find(conn => !conn.inUse);
-  if (availableConnection) {
-    availableConnection.inUse = true;
-    return availableConnection.api;
-  }
-
-  const newConnection = new RouterOSAPI({
+async function connect() {
+  const client = new RouterOSAPI({
     host: router.host,
     user: router.user,
     password: router.password,
     port: router.port,
     timeout: 30000
   });
-
-  await newConnection.connect();
-  connectionPool.push({ api: newConnection, inUse: true });
-  return newConnection;
+  await client.connect();
+  return client;
 }
 
-function releaseConnection(api) {
-  const connection = connectionPool.find(conn => conn.api === api);
-  if (connection) {
-    connection.inUse = false;
-  }
-}
-
-// Helper to safely call routerConn.write and handle !empty reply
-async function safeWrite(routerConn, command, params = []) {
+async function safeWrite(client, command, params = []) {
   try {
-    const res = await routerConn.write(command, params);
+    const res = await client.write(command, params);
     return res;
   } catch (err) {
-    // Handle !empty reply from node-routeros
-    if (
-      err &&
-      (
-        (err.errno && err.errno === 'UNKNOWNREPLY') ||
-        (typeof err.message === 'string' && err.message.includes('!empty')) ||
-        (err.reply && err.reply.includes('!empty'))
-      )
-    ) {
-      // Return empty array if !empty reply
+    if (err.message.includes('!empty') || err.message.includes('UNKNOWNREPLY')) {
+      logToFile(`[MikroTik] ⚠️ Lệnh "${command}" trả về !empty`);
       return [];
     }
     throw err;
   }
 }
 
-async function processFirewallLists() {
-  let routerConn;
-  try {
-    routerConn = await getConnection();
-    const ipLists = new Set();
-
-    // Fetch IPs from address lists
-    const lists = ['ai_port_scanner', 'ai_brute_force', 'ai_http_flood'];
-    for (const list of lists) {
-      const entries = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=${list}`]);
-      entries.forEach(entry => ipLists.add(entry.address));
-    }
-
-    for (const ip of ipLists) {
-      let score = 0;
-
-      const portScanner = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_port_scanner`, `?address=${ip}`]);
-      if (portScanner.length > 0) {
-        score += 30;
-      }
-      const bruteForce = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_brute_force`, `?address=${ip}`]);
-      if (bruteForce.length > 0) {
-        score += 40;
-      }
-      const httpFlood = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_http_flood`, `?address=${ip}`]);
-      if (httpFlood.length > 0) {
-        score += 30;
-      }
-
-      if (score >= 60) {
-        const alreadyBlocked = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_blacklist`, `?address=${ip}`]);
-        if (alreadyBlocked.length === 0) {
-          await safeWrite(routerConn, '/ip/firewall/address-list/add', [
-            `=list=ai_blacklist`,
-            `=address=${ip}`,
-            `=timeout=24h`,
-            `=comment=AI Auto Block`
-          ]);
-
-          // Send Telegram alert
-          const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
-          const url = `https://api.telegram.org/bot${telegram.token}/sendMessage?chat_id=${telegram.chatId}&text=${encodeURIComponent(text)}`;
-          await fetch(url);
-        }
-      }
-    }
-    logToFile('[INFO] Firewall lists processed successfully.');
-  } catch (err) {
-    logToFile(`[ERROR] Failed to process firewall lists: ${err.message}`);
-    if (err.errno) {
-      logToFile(`[ERROR] RouterOS API error code: ${err.errno}`);
-    }
-  } finally {
-    if (routerConn) {
-      releaseConnection(routerConn);
-    }
-  }
-}
-
-module.exports = { getConnection, releaseConnection, safeWrite, processFirewallLists };
+module.exports = { connect, safeWrite };

@@ -1,7 +1,7 @@
 const { router } = require('../config');
 const { exec } = require('child_process');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
-const { getConnection, releaseConnection, safeWrite } = require('../models/mikrotik');
+const { connect, safeWrite } = require('../models/mikrotik');
 
 const execUpdate = (bot, chatId) => {
   exec('cd /home/troxjt/telegram-bot && git pull && pm2 restart telegram-bot', (err) => {
@@ -27,13 +27,11 @@ const confirmReboot = async (bot, chatId) => {
 const rebootRouter = async (bot, chatId) => {
   let router;
   try {
-    router = await getConnection();
+    router = await connect();
     await safeWrite(router, '/system/reboot');
     sendAndDeleteMessage(bot, chatId, '🔁 RouterOS đang khởi động lại...');
   } catch (err) {
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi khởi động lại Router.');
-  } finally {
-    if (router) releaseConnection(router);
   }
 };
 

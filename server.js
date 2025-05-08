@@ -1,7 +1,4 @@
-const express = require('express');
-const path = require('path');
-const db = require('./db');
-const { getConnection, releaseConnection, safeWrite } = require('./models/mikrotik');
+const { connect, safeWrite } = require('./models/mikrotik');
 const { isWhitelisted } = require('./models/whitelist');
 const { isSuspicious, logSuspicious } = require('./models/suspicious');
 const { sendAlert } = require('./utils/messageUtils');
@@ -13,111 +10,100 @@ const {
   monitorSuspiciousIPs
 } = require('./models/device');
 
-const app = express();
-const PORT = 3000;
-
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// API to get connected devices
-app.get('/api/devices', async (req, res) => {
-    try {
-        const router = await getConnection();
-        const devices = await safeWrite(router, '/ip/arp/print');
-        if (devices.length > 0) {
-            const whitelist = await db.query('SELECT mac FROM whitelist');
-            const trustedMacs = new Set(whitelist.map(entry => entry.mac));
-
-            res.json(devices.map(device => ({
-                mac: device['mac-address'],
-                ip: device['address'],
-                interface: device['interface'],
-                isTrusted: trustedMacs.has(device['mac-address'])
-            })));
-        };
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// API to get whitelist
-app.get('/api/whitelist', async (req, res) => {
-    try {
-        const whitelist = await getWhitelist();
-        res.json(whitelist);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// API to add to whitelist
-app.post('/api/whitelist', async (req, res) => {
-    try {
-        const { mac } = req.body;
-        await db.query('INSERT INTO whitelist (mac) VALUES (?)', [mac]);
-        res.status(201).send();
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// API to remove from whitelist
-app.delete('/api/whitelist/:mac', async (req, res) => {
-    try {
-        const { mac } = req.params;
-        await db.query('DELETE FROM whitelist WHERE mac = ?', [mac]);
-        res.status(200).json({ message: 'Loại bỏ khỏi danh sách trắng' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 // Function to monitor devices
 async function monitorDevices() {
-    try {
-        const router = await getConnection();
-        const devices = await safeWrite(router, '/ip/arp/print');
-        if (devices.length > 0) {
-            for (const device of devices) {
-                const mac = device['mac-address'];
-                const ip = device['address'];
-                const iface = device['interface'];
-                const clientId = device['client-id'] || null;
+  try {
+    const router = await connect();
+    const devices = await safeWrite(router, '/ip/arp/print');
 
-                if (!mac || !ip || !iface) {
-                    logToFile(`[WARN] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
-                    continue;
-                }
+    if (devices.length > 0) {
+      for (const device of devices) {
+        const mac = device['mac-address'];
+        const ip = device['address'];
+        const iface = device['interface'];
+        const clientId = device['client-id'] || null;
 
-                const [isWhiteListed, isMarkedSuspicious] = await Promise.all([
-                    isWhitelisted(mac),
-                    isSuspicious(mac)
-                ]);
+        if (!mac || !ip || !iface) {
+          // logToFile(`[WARN] Skipping device due to missing data: MAC=${mac}, IP=${ip}, Interface=${iface}`);
+          continue;
+        }
 
-                if (!isWhiteListed && !isMarkedSuspicious) {
-                    await Promise.all([
-                        logSuspicious(mac, ip, iface, clientId),
-                        sendAlert(mac, ip, iface),
-                        limitBandwidth(mac, `${ip}/32`, iface) // Ensure IP is formatted with subnet mask
-                    ]);
-                }
+        const [isWhiteListed, isMarkedSuspicious] = await Promise.all([
+          isWhitelisted(mac),
+          isSuspicious(mac)
+        ]);
 
-                await trackConnection(mac, `${ip}/32`, iface);
-            }
+        if (!isWhiteListed && !isMarkedSuspicious) {
+          await Promise.all([
+            logSuspicious(mac, ip, iface, clientId),
+            sendAlert(mac, ip, iface),
+            limitBandwidth(mac, `${ip}/32`, iface)
+          ]);
+        }
 
-            await cleanupTrustedDevices();
-            // await monitorSuspiciousIPs();
-        };
-    } catch (err) {
-        logToFile('[ERROR] Giám sát thiết bị không thành công:', err.message);
-    }
+        await trackConnection(mac, `${ip}/32`, iface);
+      }
+
+      await cleanupTrustedDevices();
+      // await monitorSuspiciousIPs();
+
+      logToFile('[INFO] Giám sát thiết bị thành công.');
+    };
+  } catch (err) {
+    logToFile('[ERROR] Giám sát thiết bị không thành công:', err.message);
+  }
 }
 
-// Function to start the web server
-const startWebServer = (port = PORT) => {
-    app.listen(port, () => {
-        logToFile(`[WEB] Server is running on http://localhost:${port}`);
-    });
-};
+async function processFirewallLists() {
+  try {
+    const routerConn = await connect();
+    const entries = await safeWrite(routerConn, '/ip/firewall/address-list/print');
 
-module.exports = { startWebServer, monitorDevices };
+    if (entries.length > 0) {
+      for (const entry of entries) {
+        let score = 0;
+        const ip = entry.address;
+        const entrylist = entry.list;
+
+        if (entrylist === 'ai_port_scanner') {
+          score += 30;
+        } else if (entrylist === 'ai_brute_force') {
+          score += 40;
+        } else if (entrylist === 'ai_http_flood') {
+          score += 30;
+        }
+
+        if (score >= 60) {
+          let duplicate = false;
+          for (const entry_2 of entries) {
+            if (entry_2.address === ip && entry_2.list === 'ai_blacklist') {
+              duplicate = true;
+              break;
+            }
+          }
+          
+          if (!duplicate) {
+            await safeWrite(routerConn, '/ip/firewall/address-list/add', [
+              `=list=ai_blacklist`,
+              `=address=${ip}`,
+              `=timeout=24h`,
+              `=comment=AI Auto Block`
+            ]);
+    
+            // Send Telegram alert
+            const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
+            const url = `https://api.telegram.org/bot${telegram.token}/sendMessage?chat_id=${telegram.chatId}&text=${encodeURIComponent(text)}`;
+            await fetch(url);
+
+            logToFile(`[ALERT] Đã chặn IP nguy hiểm: ${ip} với điểm ${score}`);
+          }
+        }
+      }
+    }
+    // logToFile('[INFO] Danh sách tường lửa được xử lý thành công.');
+  } catch (err) {
+    logToFile(`[ERROR] Không xử lý danh sách tường lửa: ${err.message}`);
+  }
+}
+
+module.exports = { monitorDevices, processFirewallLists };

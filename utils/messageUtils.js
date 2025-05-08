@@ -34,7 +34,9 @@ const sendAndDeleteImg = (bot, chatId, photo, options = {}) => {
 const sendAlert = async (mac, ip, iface) => {
   const alertMessage = `[ALERT] Thiết bị không có trong whitelist:\nMAC: ${mac}\nIP: ${ip}\nInterface: ${iface}`;
   try {
-    // await bot.sendMessage(telegram.chatId, alertMessage);
+    const text = alertMessage;
+    const url = `https://api.telegram.org/bot${telegram.token}/sendMessage?chat_id=${telegram.chatId}&text=${encodeURIComponent(text)}`;
+    await fetch(url);
     logToFile(`[NOTIFY] Đã gửi cảnh báo qua Telegram: MAC=${mac}, IP=${ip}`);
   } catch (err) {
     logToFile(`[LỖI] Không thể gửi cảnh báo qua Telegram: ${err.message}`);

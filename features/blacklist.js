@@ -1,4 +1,4 @@
-const { getConnection, releaseConnection, safeWrite } = require('../models/mikrotik');
+const { connect, safeWrite } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 
@@ -8,7 +8,7 @@ const handleBlacklist = async (bot, chatId) => {
     let message = '📛 *DANH SÁCH ĐỊA CHỈ BỊ CHẶN:*\n\n';
 
     try {
-        router = await getConnection();
+        router = await connect();
         const allEntries = await safeWrite(router, '/ip/firewall/address-list/print');
         if (allEntries.length > 0) {
             if (!Array.isArray(allEntries) || allEntries.length === 0) {
@@ -40,8 +40,6 @@ const handleBlacklist = async (bot, chatId) => {
     } catch (err) {
         logToFile('❌ Lỗi khi lấy danh sách address-list:', err);
         sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách blacklist.');
-    } finally {
-        if (router) releaseConnection(router);
     }
 };
 
