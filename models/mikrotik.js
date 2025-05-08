@@ -66,19 +66,22 @@ async function processFirewallLists() {
     for (const ip of ipLists) {
       let score = 0;
 
-      if (await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_port_scanner`, `?address=${ip}`]).then(res => res.length > 0)) {
+      const portScanner = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_port_scanner`, `?address=${ip}`]);
+      if (portScanner.length > 0) {
         score += 30;
       }
-      if (await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_brute_force`, `?address=${ip}`]).then(res => res.length > 0)) {
+      const bruteForce = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_brute_force`, `?address=${ip}`]);
+      if (bruteForce.length > 0) {
         score += 40;
       }
-      if (await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_http_flood`, `?address=${ip}`]).then(res => res.length > 0)) {
+      const httpFlood = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_http_flood`, `?address=${ip}`]);
+      if (httpFlood.length > 0) {
         score += 30;
       }
 
       if (score >= 60) {
-        const alreadyBlocked = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_blacklist`, `?address=${ip}`]).then(res => res.length > 0);
-        if (!alreadyBlocked) {
+        const alreadyBlocked = await safeWrite(routerConn, '/ip/firewall/address-list/print', [`?list=ai_blacklist`, `?address=${ip}`]);
+        if (alreadyBlocked.length === 0) {
           await safeWrite(routerConn, '/ip/firewall/address-list/add', [
             `=list=ai_blacklist`,
             `=address=${ip}`,
