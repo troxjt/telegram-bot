@@ -15,7 +15,7 @@ async function getConnection() {
     user: router.user,
     password: router.password,
     port: router.port,
-    timeout: 60000
+    timeout: 30000
   });
 
   await newConnection.connect();
@@ -73,11 +73,16 @@ async function processFirewallLists() {
         }
       }
     }
+    console.log('[INFO] Firewall lists processed successfully.');
   } catch (err) {
     console.error(`[ERROR] Failed to process firewall lists: ${err.message}`);
-    throw err;
+    if (err.errno) {
+      console.error(`[ERROR] RouterOS API error code: ${err.errno}`);
+    }
   } finally {
-    if (routerConn) releaseConnection(routerConn);
+    if (routerConn) {
+      releaseConnection(routerConn);
+    }
   }
 }
 

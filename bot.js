@@ -21,8 +21,13 @@ monitorDevices();
 setInterval(monitorDevices, 60000);
 
 // Schedule firewall list processing
-processFirewallLists();
-setInterval(processFirewallLists, 60000);
+setInterval(async () => {
+  try {
+    await processFirewallLists();
+  } catch (err) {
+    logToFile(`[ERROR] Failed to process firewall lists: ${err.message}`);
+  }
+}, 60000);
 
 (async () => {
   try {
