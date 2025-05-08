@@ -5,7 +5,6 @@ const { telegram } = require('./config');
 const { initializeBotFeatures } = require('./features');
 const { monitorDevices, startWebServer } = require('./server');
 const { processFirewallLists } = require('./models/mikrotik');
-const { connect } = require('./models/mikrotik');
 const db = require('./db');
 
 // Custom logging function
@@ -24,22 +23,6 @@ setInterval(monitorDevices, 60000);
 // Schedule firewall list processing
 processFirewallLists();
 setInterval(processFirewallLists, 60000);
-
-async function testConnection() {
-  try {
-    const routerConn = await connect();
-    if (!routerConn.connected) {
-      throw new Error('Không thể kết nối đến RouterOS.');
-    }
-
-    const response = await routerConn.write('/system/identity/print');
-    logToFile(`Router Identity: ${JSON.stringify(response)}`);
-  } catch (err) {
-    logToFile(`Connection test failed: ${err.message}`);
-  }
-}
-
-testConnection();
 
 (async () => {
   try {
