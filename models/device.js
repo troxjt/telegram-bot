@@ -9,7 +9,7 @@ async function limitBandwidth(mac, ip, iface) {
     `=name=${mac}`,
     `=target=${ip}`,
     '=max-limit=100M/100M',
-    `=comment=Giới hạn bởi AI`
+    `=comment=AI Firewall`
   ]);
 
   await db.query('INSERT INTO bandwidth_limits (mac, ip, interface, limited_date) VALUES (?, ?, ?, NOW())', [mac, ip, iface]);
