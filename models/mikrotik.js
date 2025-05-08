@@ -37,11 +37,13 @@ async function safeWrite(routerConn, command, params = []) {
     const res = await routerConn.write(command, params);
     return res;
   } catch (err) {
+    // Handle !empty reply from node-routeros
     if (
       err &&
-      err.errno === 'UNKNOWNREPLY' &&
-      err.message &&
-      err.message.includes('!empty')
+      (
+        (err.errno && err.errno === 'UNKNOWNREPLY') ||
+        (typeof err.message === 'string' && err.message.includes('!empty'))
+      )
     ) {
       // Return empty array if !empty reply
       return [];
