@@ -42,7 +42,8 @@ async function safeWrite(routerConn, command, params = []) {
       err &&
       (
         (err.errno && err.errno === 'UNKNOWNREPLY') ||
-        (typeof err.message === 'string' && err.message.includes('!empty'))
+        (typeof err.message === 'string' && err.message.includes('!empty')) ||
+        (err.reply && err.reply.includes('!empty'))
       )
     ) {
       // Return empty array if !empty reply
