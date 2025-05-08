@@ -4,13 +4,12 @@ const { logToFile } = require('../utils/log');
 
 async function limitBandwidth(mac, ip, iface) {
   const router = await connect();
-  const name = `limit_${mac.replace(/:/g, '')}`;
 
   await safeWrite(router, '/queue/simple/add', [
-    `=name=${name}`,
+    `=name=${mac}`,
     `=target=${ip}`,
-    `=max-limit=512k/1M`,
-    `=comment=Limited by AI`
+    '=max-limit=100M/100M',
+    `=comment=Giới hạn bởi AI`
   ]);
 
   await db.query('INSERT INTO bandwidth_limits (mac, ip, interface, limited_date) VALUES (?, ?, ?, NOW())', [mac, ip, iface]);
