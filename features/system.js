@@ -29,23 +29,6 @@ const handleSystemInfo = async (bot, chatId) => {
   }
 };
 
-const handleListConnections = async (bot, chatId) => {
-  try {
-    const router = await connect();
-    const result = await safeWrite(router, '/ip/arp/print');
-    if (result.length > 0) {
-      let message = '🔌 *DANH SÁCH KẾT NỐI ARP:*\n\n';
-      result.forEach((c, i) => {
-        message += `🔹 ${i + 1}. IP: ${c.address}, MAC: ${c['mac-address']}\n`;
-      });
-      sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
-    };
-  } catch (err) {
-    logToFile('❌ Lỗi khi lấy danh sách kết nối:', err.message);
-    sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách kết nối.');
-  }
-};
-
 const handleInterfaceStatus = async (bot, chatId) => {
   let router;
   try {
@@ -64,4 +47,21 @@ const handleInterfaceStatus = async (bot, chatId) => {
   }
 };
 
-module.exports = { handleSystemInfo, handleListConnections, handleInterfaceStatus };
+const handleListConnections = async (bot, chatId) => {
+  try {
+    const router = await connect();
+    const result = await safeWrite(router, '/ip/arp/print');
+    if (result.length > 0) {
+      let message = '🔌 *DANH SÁCH KẾT NỐI ARP:*\n\n';
+      result.forEach((c, i) => {
+        message += `🔹 ${i + 1}. IP: ${c.address}, MAC: ${c['mac-address']}\n`;
+      });
+      sendAndDeleteMessage(bot, chatId, message, { parse_mode: 'Markdown' });
+    };
+  } catch (err) {
+    logToFile('❌ Lỗi khi lấy danh sách kết nối:', err.message);
+    sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách kết nối.');
+  }
+};
+
+module.exports = { handleSystemInfo, handleInterfaceStatus, handleListConnections };

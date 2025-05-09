@@ -1,24 +1,13 @@
 const fs = require('fs');
-const { RouterOSAPI } = require('node-routeros');
-const { router } = require('./config');
-const { logToFile } = require('./utils/log');
-
-const routerAPI = new RouterOSAPI({
-  host: router.host,
-  user: router.user,
-  password: router.password,
-  port: router.port,
-  timeout: 30000
-});
+const { connect, safeWrite } = require('../models/mikrotik');
+const { logToFile } = require('../utils/log');
 
 const filePath = './data/bandwidth.json';
 
-const collectBandwidth = async () => {
+const CollectBandwidth = async () => {
   try {
-    await routerAPI.connect();
-
-    const res = await routerAPI.write([
-      '/interface/monitor-traffic',
+    const router = await connect();
+    const res = await safeWrite(router, '/interface/monitor-traffic', [
       '=interface=BridgeLAN',
       '=once='
     ]);
@@ -43,10 +32,9 @@ const collectBandwidth = async () => {
     data.tx.push(tx.toFixed(2));
 
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-    await routerAPI.close();
   } catch (err) {
     logToFile('❌ Lỗi theo dõi:', err.message);
   }
 };
 
-collectBandwidth();
+module.exports = { CollectBandwidth };

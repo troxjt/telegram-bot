@@ -2,18 +2,23 @@ const TelegramBot = require('node-telegram-bot-api');
 const { telegram } = require('./config');
 const { initializeBotFeatures } = require('./features');
 const { AI_GiamSat, AI_Firewall } = require('./server');
+const { CollectBandwidth } = require('./features/bandwidthTracker');
 const { logToFile } = require('./utils/log');
 const db = require('./db');
 
 const bot = new TelegramBot(telegram.token, { polling: true });
 
-// Khởi tạo giám sát thiết bị định kỳ
+// Xử lý danh sách tường lửa
+AI_Firewall();
+setInterval(AI_Firewall, 10000);
+
+// Giám sát thiết bị định kỳ
 AI_GiamSat();
 setInterval(AI_GiamSat, 60000);
 
-// Lên lịch xử lý danh sách tường lửa
-AI_Firewall();
-setInterval(AI_Firewall, 10000);
+// Thống kê băng thông định kỳ
+CollectBandwidth();
+setInterval(CollectBandwidth, 60000);
 
 (async () => {
   try {

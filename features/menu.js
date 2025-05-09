@@ -5,7 +5,6 @@ const { handleBlacklist } = require('./blacklist');
 const { askSpeedtestMode, handleBandwidthAutoISP } = require('./speedtest');
 const { generateBandwidthChart } = require('./chart');
 const { execUpdate, confirmReboot, rebootRouter } = require('./reboot');
-const { showAIMenu, showAIDefenseList } = require('./aiDefense');
 
 const showMenu = (bot, chatId) => {
   const options = {
@@ -20,11 +19,8 @@ const showMenu = (bot, chatId) => {
           { text: '📶 Băng thông', callback_data: 'check_bandwidth' }
         ],
         [
-          { text: '📛 Danh sách chặn', callback_data: 'show_blacklist' }
-        ],
-        [
+          { text: '📛 Danh sách chặn', callback_data: 'show_blacklist' },
           { text: '📊 Biểu đồ mạng', callback_data: 'show_chart' },
-          { text: '🤖 AI Phòng thủ', callback_data: 'ai_defense_menu' }
         ],
         [
           { text: '🧠 Cập nhật Bot', callback_data: 'update_code_bot' },
@@ -62,10 +58,6 @@ const handleCallbackQuery = async (bot, cbq) => {
         return handleBlacklist(bot, chatId);
       case 'show_chart':
         return generateBandwidthChart(bot, chatId);
-      case 'ai_defense_menu':
-        return showAIMenu(bot, chatId);
-      case 'ai_defense_list':
-        return showAIDefenseList(bot, chatId);
       case 'update_code_bot':
         return execUpdate(bot, chatId);
       case 'reboot_router':
