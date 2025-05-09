@@ -4,7 +4,7 @@ const { logToFile } = require('../utils/log');
 
 const handleBlacklist = async (bot, chatId) => {
     let router;
-    const lists = ['blacklist', 'ssh_blacklist', 'ftp_blacklist', 'port_scanners'];
+    const lists = ['ai_blacklist', 'ai_port_scanner', 'ai_brute_force', 'ai_http_flood', 'suspect_ips'];
     let message = '📛 *DANH SÁCH ĐỊA CHỈ BỊ CHẶN:*\n\n';
 
     try {
