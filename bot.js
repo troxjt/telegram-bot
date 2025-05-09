@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { telegram } = require('./config');
 const { initializeBotFeatures } = require('./features');
-const { AI_GiamSat, AI_Firewall } = require('./server');
+const { AI_GiamSat, AI_Firewall } = require('./models/ai_firewall');
 const { CollectBandwidth } = require('./features/bandwidthTracker');
 const { logToFile } = require('./utils/log');
 const db = require('./db');

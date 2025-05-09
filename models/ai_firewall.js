@@ -1,14 +1,14 @@
-const { connect, safeWrite } = require('./models/mikrotik');
-const { KiemTraDanhSachWhitelist } = require('./models/whitelist');
-const { KiemTraDanhSachKhaNghi, logSuspicious } = require('./models/suspicious');
-const { GuiThongBaoTele } = require('./utils/messageUtils');
-const { logToFile } = require('./utils/log');
+const { connect, safeWrite } = require('./mikrotik');
+const { KiemTraDanhSachWhitelist } = require('./whitelist');
+const { KiemTraDanhSachKhaNghi, logSuspicious } = require('./suspicious');
+const { GuiThongBaoTele } = require('../utils/messageUtils');
+const { logToFile } = require('../utils/log');
 const {
   GioiHanBangThong,
   KiemTraKetNoi,
   DonDepThietBiTinCay,
   monitorSuspiciousIPs
-} = require('./models/device');
+} = require('./device');
 
 // Function to monitor devices
 async function AI_GiamSat() {
