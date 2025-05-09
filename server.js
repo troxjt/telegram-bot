@@ -1,17 +1,17 @@
 const { connect, safeWrite } = require('./models/mikrotik');
-const { isWhitelisted } = require('./models/whitelist');
-const { isSuspicious, logSuspicious } = require('./models/suspicious');
+const { KiemTraDanhSachWhitelist } = require('./models/whitelist');
+const { KiemTraDanhSachKhaNghi, logSuspicious } = require('./models/suspicious');
 const { GuiThongBaoTele } = require('./utils/messageUtils');
 const { logToFile } = require('./utils/log');
 const {
-  limitBandwidth,
-  trackConnection,
-  cleanupTrustedDevices,
+  GioiHanBangThong,
+  KiemTraKetNoi,
+  DonDepThietBiTinCay,
   monitorSuspiciousIPs
 } = require('./models/device');
 
 // Function to monitor devices
-async function monitorDevices() {
+async function AI_GiamSat() {
   try {
     const router = await connect();
     const devices = await safeWrite(router, '/ip/arp/print');
@@ -29,8 +29,8 @@ async function monitorDevices() {
         }
 
         const [isWhiteListed, isMarkedSuspicious] = await Promise.all([
-          isWhitelisted(mac),
-          isSuspicious(mac)
+          KiemTraDanhSachWhitelist(mac),
+          KiemTraDanhSachKhaNghi(mac)
         ]);
 
         
@@ -39,14 +39,14 @@ async function monitorDevices() {
           await Promise.all([
             logSuspicious(mac, ip, iface, clientId),
             GuiThongBaoTele(alertMessage),
-            limitBandwidth(mac, `${ip}/32`, iface)
+            GioiHanBangThong(mac, `${ip}/32`, iface)
           ]);
         }
 
-        await trackConnection(mac, `${ip}/32`, iface);
+        await KiemTraKetNoi(mac, `${ip}/32`, iface);
       }
 
-      await cleanupTrustedDevices();
+      await DonDepThietBiTinCay();
       // await monitorSuspiciousIPs();
 
       logToFile('[THÔNG TIN] Giám sát thiết bị thành công.');
@@ -56,58 +56,55 @@ async function monitorDevices() {
   }
 }
 
-async function processFirewallLists() {
+async function AI_Firewall() {
   try {
     const routerConn = await connect();
     const entries = await safeWrite(routerConn, '/ip/firewall/address-list/print');
-    const exists = await safeWrite(routerConn, '/ip/firewall/address-list/print', [
-      `=address=${ip}`,
-      `=list=ai_blacklist`
-    ]);
-    console.log(exists)
-    // if (entries.length > 0) {
-    //   for (const entry of entries) {
-    //     let score = 0;
-    //     const ip = entry.address;
-    //     const entrylist = entry.list;
 
-    //     if (entrylist === 'ai_port_scanner') {
-    //       score += 30;
-    //     } else if (entrylist === 'ai_brute_force') {
-    //       score += 40;
-    //     } else if (entrylist === 'ai_http_flood') {
-    //       score += 30;
-    //     }
+    if (entries.length > 0) {
+      for (const entry of entries) {
+        let score = 0;
+        const ip = entry.address;
+        const entrylist = entry.list;
 
-    //     if (score >= 60) {
-    //       let duplicate = false;
-    //       for (const entry_2 of entries) {
-    //         if (entry_2.address === ip && entry_2.list === 'ai_blacklist') {
-    //           duplicate = true;
-    //           break;
-    //         }
-    //       }
+        if (entrylist === 'ai_port_scanner') {
+          score += 30;
+        } else if (entrylist === 'ai_brute_force') {
+          score += 40;
+        } else if (entrylist === 'ai_http_flood') {
+          score += 30;
+        }
+
+        if (score >= 60) {
+          let duplicate = false;
+          for (const entry_2 of entries) {
+            if (entry_2.address === ip && entry_2.list === 'ai_blacklist') {
+              duplicate = true;
+              break;
+            }
+          }
           
-    //       if (!duplicate) {
-    //         await safeWrite(routerConn, '/ip/firewall/address-list/add', [
-    //           `=list=ai_blacklist`,
-    //           `=address=${ip}`,
-    //           `=timeout=24h`,
-    //           `=comment=AI Auto Block`
-    //         ]);
+          if (!duplicate) {
+            await safeWrite(routerConn, '/ip/firewall/address-list/add', [
+              `=list=ai_blacklist`,
+              `=address=${ip}`,
+              `=timeout=24h`,
+              `=comment=Bi chan boi AI`
+            ]);
     
-    //         // Send Telegram alert
-    //         const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
-    //         await GuiThongBaoTele(text);
-    //         logToFile(`[BÁO ĐỘNG] Đã chặn IP nguy hiểm: ${ip} với điểm ${score}`);
-    //       }
-    //     }
-    //   }
-    // }
+            // Send Telegram alert
+            const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
+            await GuiThongBaoTele(text);
+            logToFile(`[BÁO ĐỘNG] Đã chặn IP nguy hiểm: ${ip} với điểm ${score}`);
+          }
+        }
+      }
+    }
+
     // logToFile('[THÔNG TIN] Danh sách tường lửa được xử lý thành công.');
   } catch (err) {
     logToFile(`[LỖI] Không xử lý danh sách tường lửa: ${err.message}`);
   }
 }
 
-module.exports = { monitorDevices, processFirewallLists };
+module.exports = { AI_GiamSat, AI_Firewall };

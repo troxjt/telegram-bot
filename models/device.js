@@ -1,8 +1,9 @@
 const db = require('../db');
 const { connect, safeWrite } = require('./mikrotik');
 const { logToFile } = require('../utils/log');
+const e = require('express');
 
-async function limitBandwidth(mac, ip, iface) {
+async function GioiHanBangThong(mac, ip, iface) {
   const router = await connect();
 
   await safeWrite(router, '/queue/simple/add', [
@@ -17,7 +18,7 @@ async function limitBandwidth(mac, ip, iface) {
   logToFile(`[MikroTik] 🚦 Đã giới hạn băng thông cho ${mac} (${ip})`);
 }
 
-async function trackConnection(mac, ip, iface) {
+async function KiemTraKetNoi(mac, ip, iface) {
   try {
     const result = await db.query('SELECT days_connected FROM connection_logs WHERE mac = ?', [mac]);
     if (result.length > 0) {
@@ -37,7 +38,7 @@ async function trackConnection(mac, ip, iface) {
       }
     } else {
       await db.query('INSERT INTO connection_logs (mac, connection_date) VALUES (?, CURDATE()) ON DUPLICATE KEY UPDATE connection_date = VALUES(connection_date)', [mac]);
-      await limitBandwidth(mac, ip, iface);
+      await GioiHanBangThong(mac, ip, iface);
     }
   } catch (err) {
     logToFile(`[LỖI] Không theo dõi kết nối cho MAC=${mac}: ${err.message}`);
@@ -45,7 +46,7 @@ async function trackConnection(mac, ip, iface) {
   }
 }
 
-async function cleanupTrustedDevices() {
+async function DonDepThietBiTinCay() {
   try {
     await db.query(
       'DELETE FROM whitelist WHERE mac NOT IN (SELECT mac FROM connection_logs WHERE connection_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY))'
@@ -56,9 +57,34 @@ async function cleanupTrustedDevices() {
   }
 }
 
+async function inspectIP(ip) {
+  const exists = await safeWrite(router, '/ip/firewall/address-list/print', [
+    `?address=${ip}`,
+    `?list=ai_blacklist`
+  ]);
+  if (exists.length === 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+async function ChanIp(ip, comment = 'Bi chan boi AI') {
+  const router = await connect();
+  await safeWrite(router, '/ip/firewall/address-list/add', [
+    `=address=${ip}`,
+    `=list=ai_blacklist`,
+    `=comment=${comment}`
+  ]);
+  await db.query('INSERT INTO blocked_ips (ip, blocked_date) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE blocked_date = NOW()', [ip]);
+  const Text = `[CẢNH BÁO]\n🚫 Đã chặn IP nguy hiểm!\nIP: ${ip}`;
+  GuiThongBaoTele(Text);
+  logToFile(`[MikroTik] 🚫 IP ${ip} đã bị chặn.`);
+}
+
 async function monitorSuspiciousIPs() {
   try {
-    const router = await connect(); // Use connect instead of connect
+    const router = await connect();
     const addressLists = await safeWrite(router, '/ip/firewall/address-list/print');
     if (addressLists.length > 0) {
       for (const entry of addressLists) {
@@ -77,34 +103,10 @@ async function monitorSuspiciousIPs() {
   }
 }
 
-async function inspectIP(ip) {
-  return false;
-}
-
-// Chặn IP vào danh sách
-async function blockIp(ip, comment = 'Blocked by AI') {
-  const router = await connect();
-  const exists = await safeWrite(router, '/ip/firewall/address-list/print', [
-    `?address=${ip}`,
-    `?list=ai_blacklist`
-  ]);
-  if (exists.length === 0) {
-    await safeWrite(router, '/ip/firewall/address-list/add', [
-      `=address=${ip}`,
-      `=list=ai_blacklist`,
-      `=comment=${comment}`
-    ]);
-    await db.query('INSERT INTO blocked_ips (ip, blocked_date) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE blocked_date = NOW()', [ip]);
-    logToFile(`[MikroTik] 🚫 IP ${ip} đã bị chặn.`);
-  } else {
-    logToFile(`[MikroTik] ⚠️ IP ${ip} đã có trong danh sách chặn.`);
-  }
-}
-
 module.exports = {
-  blockIp,
-  limitBandwidth,
-  trackConnection,
-  cleanupTrustedDevices,
+  ChanIp,
+  GioiHanBangThong,
+  KiemTraKetNoi,
+  DonDepThietBiTinCay,
   monitorSuspiciousIPs
 };

@@ -24,7 +24,7 @@ async function logSuspicious(mac, ip, iface, clientId) {
   }
 }
 
-async function isSuspicious(mac) {
+async function KiemTraDanhSachKhaNghi(mac) {
   try {
     const result = await db.query('SELECT 1 FROM suspicious_devices WHERE mac = ?', [mac]);
     return result.length > 0;
@@ -34,4 +34,4 @@ async function isSuspicious(mac) {
   }
 }
 
-module.exports = { logSuspicious, isSuspicious };
+module.exports = { logSuspicious, KiemTraDanhSachKhaNghi };
