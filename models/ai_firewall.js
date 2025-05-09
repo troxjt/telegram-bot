@@ -62,10 +62,12 @@ async function AI_Firewall() {
     const FirewallAddressList = await safeWrite(routerConn, '/ip/firewall/address-list/print');
 
     if (FirewallAddressList.length > 0) {
-      for (const entry_1 of FirewallAddressList) {
-        let score = 0;
-        const ip = entry_1.address;
-        const entrylist = entry_1.list;
+      const ipScores = new Map();
+
+      for (const entry of FirewallAddressList) {
+        const ip = entry.address;
+        const entrylist = entry.list;
+        let score = ipScores.get(ip) || 0;
 
         if (entrylist === 'ai_port_scanner') {
           score += 30;
@@ -77,23 +79,23 @@ async function AI_Firewall() {
           score += 20;
         }
 
+        ipScores.set(ip, score);
+      }
+
+      for (const [ip, score] of ipScores.entries()) {
         if (score >= 60) {
-          let duplicate = false;
-          for (const entry_2 of FirewallAddressList) {
-            if (entry_2.address === ip && entry_2.list === 'ai_blacklist') {
-              duplicate = true;
-              break;
-            }
-          }
-          
-          if (!duplicate) {
+          const isBlacklisted = FirewallAddressList.some(
+            (entry) => entry.address === ip && entry.list === 'ai_blacklist'
+          );
+
+          if (!isBlacklisted) {
             await safeWrite(routerConn, '/ip/firewall/address-list/add', [
               `=list=ai_blacklist`,
               `=address=${ip}`,
               `=timeout=24h`,
               `=comment=Bi chan boi AI`
             ]);
-    
+
             const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
             await GuiThongBaoTele(text);
             logToFile(`[BÁO ĐỘNG] Đã chặn IP nguy hiểm: ${ip} với điểm ${score}`);
