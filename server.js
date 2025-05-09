@@ -59,13 +59,13 @@ async function AI_GiamSat() {
 async function AI_Firewall() {
   try {
     const routerConn = await connect();
-    const entries = await safeWrite(routerConn, '/ip/firewall/address-list/print');
+    const FirewallAddressList = await safeWrite(routerConn, '/ip/firewall/address-list/print');
 
-    if (entries.length > 0) {
-      for (const entry of entries) {
+    if (FirewallAddressList.length > 0) {
+      for (const entry_1 of FirewallAddressList) {
         let score = 0;
-        const ip = entry.address;
-        const entrylist = entry.list;
+        const ip = entry_1.address;
+        const entrylist = entry_1.list;
 
         if (entrylist === 'ai_port_scanner') {
           score += 30;
@@ -73,11 +73,13 @@ async function AI_Firewall() {
           score += 40;
         } else if (entrylist === 'ai_http_flood') {
           score += 30;
+        } else if (entrylist === 'suspect_ips') {
+          score += 20;
         }
 
         if (score >= 60) {
           let duplicate = false;
-          for (const entry_2 of entries) {
+          for (const entry_2 of FirewallAddressList) {
             if (entry_2.address === ip && entry_2.list === 'ai_blacklist') {
               duplicate = true;
               break;
@@ -92,7 +94,6 @@ async function AI_Firewall() {
               `=comment=Bi chan boi AI`
             ]);
     
-            // Send Telegram alert
             const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
             await GuiThongBaoTele(text);
             logToFile(`[BÁO ĐỘNG] Đã chặn IP nguy hiểm: ${ip} với điểm ${score}`);
@@ -101,7 +102,7 @@ async function AI_Firewall() {
       }
     }
 
-    // logToFile('[THÔNG TIN] Danh sách tường lửa được xử lý thành công.');
+    logToFile('[THÔNG TIN] Danh sách tường lửa được xử lý thành công.');
   } catch (err) {
     logToFile(`[LỖI] Không xử lý danh sách tường lửa: ${err.message}`);
   }
