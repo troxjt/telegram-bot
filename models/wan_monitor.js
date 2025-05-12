@@ -1,75 +1,61 @@
 const { connect, safeWrite } = require('./mikrotik');
+const { logToFile } = require('../utils/log');
 const { GuiThongBaoTele } = require('../utils/messageUtils');
-const fs = require('fs');
 
-const PPPoE_LIST = ['pppoe-out1', 'pppoe-out2'];
-const stateFile = './data/wan_states.json';
-
-function loadState() {
-    try {
-        return JSON.parse(fs.readFileSync(stateFile));
-    } catch {
-        return {};
-    }
-}
-
-function saveState(state) {
-    fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-}
-
-async function checkPPPoEStatus(client, iface) {
-    try {
-        const ipAddr = await safeWrite(client, '/ip/address/print', [`?interface=${iface}`]);
-        if (ipAddr.length === 0) {
-            return { iface, status: 'no_ip' };
-        }
-
-        const pingResult = await safeWrite(client, '/ping', [
-            '=address=8.8.8.10',
-            `=interface=${iface}`,
-            '=count=3',
-            '=interval=1s'
-        ]);
-
-        if (pingResult.length === 0) {
-            return { iface, status: 'no_ping' };
-        }
-
-        return { iface, status: 'ok' };
-    } catch (err) {
-        console.error(`[PPPoE Monitor] Lỗi kiểm tra ${iface}:`, err.message);
-        return { iface, status: 'error' };
-    }
-}
+const pppoeList = ['pppoe-out1', 'pppoe-out2'];
 
 async function monitorPPPoEs() {
-    const client = await connect();
-    const state = loadState();
+  try {
+    const router = await connect();
     let failList = [];
     let totalPPPoE = 0;
     let failedPPPoE = 0;
-    console.log('[PPPoE Monitor] Bắt đầu kiểm tra trạng thái PPPoE...');
-    for (const iface of PPPoE_LIST) {
-        totalPPPoE++;
-        const result = await checkPPPoEStatus(client, iface);
-        console.log(`[PPPoE Monitor] ${iface}: ${result.status}`);
-        if (result.status === 'no_ip') {
-            failList.push(`❌ ${iface}: không có IP`);
-            failedPPPoE++;
-        } else if (result.status === 'no_ping') {
-            failList.push(`❌ ${iface}: không ping được`);
-            failedPPPoE++;
-        }
 
-        state[iface] = result.status;
+    for (const iface of pppoeList) {
+      totalPPPoE++;
+
+      // Kiểm tra địa chỉ IP của interface
+      const ipAddr = await safeWrite(router, '/ip/address/print', [`?interface=${iface}`]);
+      if (ipAddr.length === 0) {
+        failList.push(`❌ ${iface}: không có IP`);
+        failedPPPoE++;
+
+        // Vô hiệu hóa cân bằng tải cho interface bị lỗi
+        await safeWrite(router, '/ip/route/disable', [`?gateway=${iface}`]);
+        continue;
+      }
+
+      // Kiểm tra kết nối bằng ping
+      const pingResult = await safeWrite(router, '/ping', [
+        `=address=8.8.8.8`,
+        `=interface=${iface}`,
+        `=count=3`,
+        `=interval=1s`
+      ]);
+
+      if (pingResult.length === 0 || pingResult[0].received === '0') {
+        failList.push(`❌ ${iface}: không ping được`);
+        failedPPPoE++;
+
+        // Vô hiệu hóa cân bằng tải cho interface bị lỗi
+        await safeWrite(router, '/ip/route/disable', [`?gateway=${iface}`]);
+      } else {
+        // Kích hoạt lại cân bằng tải nếu interface hoạt động bình thường
+        await safeWrite(router, '/ip/route/enable', [`?gateway=${iface}`]);
+      }
     }
 
+    // Gửi thông báo Telegram nếu có lỗi
     if (failedPPPoE > 0) {
-        const message = `🚨 CẢNH BÁO MẠNG PPPoE!\n\n${failList.join('\n')}`;
-        await GuiThongBaoTele(message);
+      const message = `🚨 CẢNH BÁO MẠNG PPPoE!\n\n${failList.join('\n')}`;
+      await GuiThongBaoTele(message);
+      logToFile(`[CẢNH BÁO] ${failedPPPoE}/${totalPPPoE} kết nối PPPoE gặp sự cố.`);
+    } else {
+      logToFile('[THÔNG TIN] Tất cả kết nối PPPoE đều hoạt động bình thường.');
     }
-
-    saveState(state);
+  } catch (err) {
+    logToFile(`[LỖI] Không thể kiểm tra kết nối PPPoE: ${err.message}`);
+  }
 }
 
 module.exports = { monitorPPPoEs };
