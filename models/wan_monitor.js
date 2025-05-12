@@ -28,16 +28,19 @@ async function monitorPPPoEs() {
         continue;
       }
 
+      // Xác định DNS để ping dựa trên interface
+      const dnsToPing = iface === 'pppoe-out2' ? '192.0.2.1' : '8.8.8.8';
+
       // Kiểm tra kết nối bằng ping
       const pingResult = await safeWrite(router, '/ping', [
-        `=address=8.8.8.8`,
+        `=address=${dnsToPing}`,
         `=interface=${iface}`,
         `=count=3`,
         `=interval=1s`
       ]);
 
       if (pingResult.length === 0 || pingResult[0].received === '0') {
-        failList.push(`❌ ${iface}: không ping được`);
+        failList.push(`❌ ${iface}: không ping được đến ${dnsToPing}`);
         failedPPPoE++;
 
         // Lấy .id của route liên quan đến interface
