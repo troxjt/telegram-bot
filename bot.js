@@ -17,13 +17,13 @@ setInterval(AI_Firewall, 10000);
 AI_GiamSat();
 setInterval(AI_GiamSat, 60000);
 
-// Thống kê băng thông định kỳ
-CollectBandwidth();
-setInterval(CollectBandwidth, 60000);
-
 // Kiểm tra kết nối WAN định kỳ
 monitorPPPoEs();
 setInterval(monitorPPPoEs, 60000);
+
+// Thống kê băng thông định kỳ
+CollectBandwidth();
+setInterval(CollectBandwidth, 60000);
 
 (async () => {
   try {

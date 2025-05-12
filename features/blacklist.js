@@ -1,4 +1,4 @@
-const { connect, safeWrite } = require('../models/mikrotik');
+const { connect, safeWrite, disconnect } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 
@@ -40,6 +40,8 @@ const handleBlacklist = async (bot, chatId) => {
     } catch (err) {
         logToFile('❌ Lỗi khi lấy danh sách address-list:', err);
         sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách blacklist.');
+    } finally {
+        await disconnect();
     }
 };
 

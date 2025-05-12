@@ -1,17 +1,38 @@
 const { RouterOSAPI } = require('node-routeros');
-const { router, telegram } = require('../config');
+const { router } = require('../config');
 const { logToFile } = require('../utils/log');
 
+let clientInstance = null;
+
 async function connect() {
-  const client = new RouterOSAPI({
+  if (clientInstance && clientInstance.connected) {
+    return clientInstance;
+  }
+
+  clientInstance = new RouterOSAPI({
     host: router.host,
     user: router.user,
     password: router.password,
     port: router.port,
-    timeout: 30000
+    timeout: 30000,
   });
-  await client.connect();
-  return client;
+
+  try {
+    await clientInstance.connect();
+    // logToFile('[MikroTik] ✅ Kết nối thành công');
+    return clientInstance;
+  } catch (err) {
+    logToFile(`[MikroTik] ❌ Lỗi kết nối: ${err.message}`);
+    throw err;
+  }
+}
+
+async function disconnect() {
+  if (clientInstance && clientInstance.connected) {
+    await clientInstance.close();
+    logToFile('[MikroTik] 🔌 Đã đóng kết nối');
+    clientInstance = null;
+  }
 }
 
 async function safeWrite(client, command, params = []) {
@@ -23,8 +44,9 @@ async function safeWrite(client, command, params = []) {
       logToFile(`[MikroTik] ⚠️ Lệnh "${command}" trả về !empty`);
       return [];
     }
+    logToFile(`[MikroTik] ❌ Lỗi khi thực thi lệnh "${command}": ${err.message}`);
     throw err;
   }
 }
 
-module.exports = { connect, safeWrite };
+module.exports = { connect, disconnect, safeWrite };

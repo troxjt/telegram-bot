@@ -1,4 +1,4 @@
-const { connect, safeWrite } = require('../models/mikrotik');
+const { connect, safeWrite, disconnect } = require('../models/mikrotik');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 
@@ -26,6 +26,8 @@ const handleSystemInfo = async (bot, chatId) => {
   } catch (err) {
     logToFile('❌ Lỗi khi lấy thông tin hệ thống:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy thông tin hệ thống.');
+  } finally {
+    await disconnect();
   }
 };
 
@@ -44,6 +46,8 @@ const handleInterfaceStatus = async (bot, chatId) => {
   } catch (err) {
     logToFile('❌ Lỗi khi lấy trạng thái giao diện:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy trạng thái giao diện.');
+  } finally {
+    await disconnect();
   }
 };
 
@@ -61,6 +65,8 @@ const handleListConnections = async (bot, chatId) => {
   } catch (err) {
     logToFile('❌ Lỗi khi lấy danh sách kết nối:', err.message);
     sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách kết nối.');
+  } finally {
+    await disconnect();
   }
 };
 
