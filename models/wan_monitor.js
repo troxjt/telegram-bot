@@ -15,7 +15,7 @@ async function monitorPPPoEs() {
       totalPPPoE++;
 
       // Kiểm tra địa chỉ IP của interface
-      const ipAddr = await safeWrite(router, '/ip/address/print', [`?interface=${iface}`]);
+      const ipAddr = await safeWrite(router, '/ip/address/print', [`=interface=${iface}`]);
       if (ipAddr.length === 0) {
         failList.push(`❌ ${iface}: không có IP`);
         failedPPPoE++;
