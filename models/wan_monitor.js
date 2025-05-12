@@ -15,7 +15,7 @@ async function checkWanStatus(client, wan) {
       `=address=${wan.gateway}`,
       '=count=2',
       '=interval=1s',
-      '=timeout=1000ms'
+      '=timeout=1'
     ]);
     return result.length > 0;
   } catch (err) {
