@@ -21,6 +21,7 @@
     "node-fetch": "^3.3.2",
     "node-routeros": "^1.6.9",
     "node-telegram-bot-api": "^0.66.0",
+    "redis": "^5.0.1",
     "routeros-client": "^1.1.1"
   }
 }
