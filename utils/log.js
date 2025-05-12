@@ -1,11 +1,10 @@
 const fs = require('fs');
-const path = require('path');
 
 // Custom logging function
 function logToFile(message) {
     try {
         const logDir = __dirname;
-        const logFilePath = path.join(logDir, 'app.log');
+        const logFilePath = './data/app.log';
 
         // Get current time in UTC+7
         const now = new Date();
