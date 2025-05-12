@@ -25,7 +25,7 @@ async function checkPPPoEStatus(client, iface) {
         }
 
         const pingResult = await safeWrite(client, '/ping', [
-            '=address=8.8.1.0',
+            '=address=8.8.8.10',
             `=interface=${iface}`,
             '=count=3',
             '=interval=1s'
