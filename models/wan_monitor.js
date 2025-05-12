@@ -48,11 +48,11 @@ async function monitorPPPoEs() {
     let failList = [];
     let totalPPPoE = 0;
     let failedPPPoE = 0;
-
+    console.log('[PPPoE Monitor] Bắt đầu kiểm tra trạng thái PPPoE...');
     for (const iface of PPPoE_LIST) {
         totalPPPoE++;
         const result = await checkPPPoEStatus(client, iface);
-
+        console.log(`[PPPoE Monitor] ${iface}: ${result.status}`);
         if (result.status === 'no_ip') {
             failList.push(`❌ ${iface}: không có IP`);
             failedPPPoE++;
