@@ -1,13 +1,26 @@
 const { connect, safeWrite } = require('./mikrotik');
 const { GuiThongBaoTele } = require('../utils/messageUtils');
-const redis = require('redis').createClient();
+const fs = require('fs');
+const path = require('path');
+
 const WANS = [
   { name: 'WAN1', gateway: '8.8.8.8', routeMark: 'WAN1' },
   { name: 'WAN2', gateway: '1.1.1.1', routeMark: 'WAN2' }
 ];
 
-// Kết nối Redis (nếu chưa kết nối)
-redis.connect().catch(console.error);
+const stateFile = './data/wan_states.json';
+
+function loadState() {
+  try {
+    return JSON.parse(fs.readFileSync(stateFile));
+  } catch {
+    return {};
+  }
+}
+
+function saveState(state) {
+  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+}
 
 async function checkWanStatus(client, wan) {
   try {
@@ -35,24 +48,26 @@ async function toggleWanRoute(client, wan, enable = true) {
 
 async function monitorWANs() {
   const client = await connect();
+  const state = loadState();
 
   for (const wan of WANS) {
     const alive = await checkWanStatus(client, wan);
-    const stateKey = `wan_state_${wan.name}`;
-    const previous = await redis.get(stateKey);
+    const previous = state[wan.name] || 'unknown';
 
     if (!alive && previous !== 'down') {
       await toggleWanRoute(client, wan, false);
       await GuiThongBaoTele(`\u26A0\uFE0F *MẤT KẾT NỐI* \u26A0\uFE0F\nĐường truyền *${wan.name}* không phản hồi (${wan.gateway})\n\uD83D\uDD04 Chuyển tải về đường còn lại.`);
-      await redis.set(stateKey, 'down');
+      state[wan.name] = 'down';
     } else if (alive && previous === 'down') {
       await toggleWanRoute(client, wan, true);
       await GuiThongBaoTele(`✅ *HOẠT ĐỘNG TRỞ LẠI* ✅\nĐường truyền *${wan.name}* đã phản hồi (${wan.gateway})\n\uD83D\uDEE0\uFE0F Đã bật lại cân bằng tải.`);
-      await redis.set(stateKey, 'up');
+      state[wan.name] = 'up';
     } else {
       console.log(`[WAN Monitor] ${wan.name}: trạng thái ${alive ? 'up' : 'down'} không thay đổi.`);
     }
   }
+
+  saveState(state);
 }
 
 module.exports = { monitorWANs };
