@@ -49,12 +49,12 @@ async function monitorPPPoEs() {
     if (failedPPPoE > 0) {
       const message = `🚨 CẢNH BÁO MẠNG PPPoE!\n\n${failList.join('\n')}`;
       await GuiThongBaoTele(message);
-      logToFile(`[CẢNH BÁO] ${failedPPPoE}/${totalPPPoE} kết nối PPPoE gặp sự cố.`);
+      console.log(`[CẢNH BÁO] ${failedPPPoE}/${totalPPPoE} kết nối PPPoE gặp sự cố.`);
     } else {
-      logToFile('[THÔNG TIN] Tất cả kết nối PPPoE đều hoạt động bình thường.');
+      console.log('[THÔNG TIN] Tất cả kết nối PPPoE đều hoạt động bình thường.');
     }
   } catch (err) {
-    logToFile(`[LỖI] Không thể kiểm tra kết nối PPPoE: ${err.message}`);
+    console.log(`[LỖI] Không thể kiểm tra kết nối PPPoE: ${err.message}`);
   }
 }
 
