@@ -15,13 +15,16 @@ async function monitorPPPoEs() {
       totalPPPoE++;
 
       // Kiểm tra địa chỉ IP của interface
-      const ipAddr = await safeWrite(router, '/ip/address/print', [`=interface=${iface}`]);
+      const ipAddr = await safeWrite(router, '/ip/address/print', [`?interface=${iface}`]);
       if (ipAddr.length === 0) {
         failList.push(`❌ ${iface}: không có IP`);
         failedPPPoE++;
 
-        // Vô hiệu hóa cân bằng tải cho interface bị lỗi
-        await safeWrite(router, '/ip/route/disable', [`?gateway=${iface}`]);
+        // Lấy .id của route liên quan đến interface
+        const routeId = await safeWrite(router, '/ip/route/print', [`?gateway=${iface}`]);
+        if (routeId.length > 0) {
+          await safeWrite(router, '/ip/route/disable', [`=.id=${routeId[0]['.id']}`]);
+        }
         continue;
       }
 
@@ -37,11 +40,17 @@ async function monitorPPPoEs() {
         failList.push(`❌ ${iface}: không ping được`);
         failedPPPoE++;
 
-        // Vô hiệu hóa cân bằng tải cho interface bị lỗi
-        await safeWrite(router, '/ip/route/disable', [`?gateway=${iface}`]);
+        // Lấy .id của route liên quan đến interface
+        const routeId = await safeWrite(router, '/ip/route/print', [`?gateway=${iface}`]);
+        if (routeId.length > 0) {
+          await safeWrite(router, '/ip/route/disable', [`=.id=${routeId[0]['.id']}`]);
+        }
       } else {
         // Kích hoạt lại cân bằng tải nếu interface hoạt động bình thường
-        await safeWrite(router, '/ip/route/enable', [`?gateway=${iface}`]);
+        const routeId = await safeWrite(router, '/ip/route/print', [`?gateway=${iface}`]);
+        if (routeId.length > 0) {
+          await safeWrite(router, '/ip/route/enable', [`=.id=${routeId[0]['.id']}`]);
+        }
       }
     }
 
