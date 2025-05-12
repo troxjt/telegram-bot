@@ -3,7 +3,7 @@ const { telegram } = require('./config');
 const { initializeBotFeatures } = require('./features');
 const { AI_GiamSat, AI_Firewall } = require('./models/ai_firewall');
 const { CollectBandwidth } = require('./features/bandwidthTracker');
-const { monitorWANs } = require('./models/wan_monitor');
+const { monitorPPPoEs } = require('./models/wan_monitor');
 const { logToFile } = require('./utils/log');
 const db = require('./db');
 
@@ -22,8 +22,8 @@ CollectBandwidth();
 setInterval(CollectBandwidth, 60000);
 
 // Kiểm tra kết nối WAN định kỳ
-monitorWANs();
-setInterval(monitorWANs, 60000);
+monitorPPPoEs();
+setInterval(monitorPPPoEs, 60000);
 
 (async () => {
   try {
