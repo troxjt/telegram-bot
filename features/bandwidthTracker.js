@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { connect, safeWrite, disconnect } = require('../models/mikrotik');
+const { connect, safeWrite } = require('../models/mikrotik');
 const { logToFile } = require('../utils/log');
 
 const filePath = './data/bandwidth.json';
@@ -34,8 +34,6 @@ const CollectBandwidth = async () => {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
   } catch (err) {
     logToFile('❌ Lỗi theo dõi:', err.message);
-  } finally {
-    await disconnect();
   }
 };
 
