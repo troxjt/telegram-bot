@@ -11,19 +11,19 @@ const bot = new TelegramBot(telegram.token, { polling: true });
 
 // Xử lý danh sách tường lửa
 AI_Firewall();
-setInterval(AI_Firewall, 10000);
+setInterval(AI_Firewall, 1*60*1000);
 
 // Giám sát thiết bị định kỳ
 AI_GiamSat();
-setInterval(AI_GiamSat, 60000);
+setInterval(AI_GiamSat, 2*60*1000);
 
 // Kiểm tra kết nối WAN định kỳ
 monitorPPPoEs();
-setInterval(monitorPPPoEs, 60000);
+setInterval(monitorPPPoEs, 5*60*1000);
 
 // Thống kê băng thông định kỳ
-CollectBandwidth();
-setInterval(CollectBandwidth, 60000);
+// CollectBandwidth();
+// setInterval(CollectBandwidth, 60000);
 
 (async () => {
   try {
