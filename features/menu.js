@@ -1,26 +1,18 @@
 const { logToFile } = require('../utils/log');
 const { sendAndDeleteMessage } = require('../utils/messageUtils');
-const { handleSystemInfo, handleListConnections, handleInterfaceStatus } = require('./system');
 const { handleBlacklist } = require('./blacklist');
-const { askSpeedtestMode, handleBandwidthAutoISP } = require('./speedtest');
-const { generateBandwidthChart } = require('./chart');
 const { execUpdate, confirmReboot, rebootRouter } = require('./reboot');
+const { addWhitelistFlow } = require('./whitelist'); // thêm dòng này
 
 const showMenu = (bot, chatId) => {
   const options = {
     reply_markup: {
       inline_keyboard: [
         [
-          { text: '🖥️ Hệ thống', callback_data: 'get_system_info' },
-          { text: '🌐 Giao diện', callback_data: 'interface_status' }
+          { text: '📛 Danh sách chặn', callback_data: 'show_blacklist' }
         ],
         [
-          { text: '🔌 ARP', callback_data: 'list_connections' },
-          { text: '📶 Băng thông', callback_data: 'check_bandwidth' }
-        ],
-        [
-          { text: '📛 Danh sách chặn', callback_data: 'show_blacklist' },
-          { text: '📊 Biểu đồ mạng', callback_data: 'show_chart' },
+          { text: '➕ Thêm thiết bị tin cậy', callback_data: 'add_whitelist' } // thêm nút này
         ],
         [
           { text: '🧠 Cập nhật Bot', callback_data: 'update_code_bot' },
@@ -44,20 +36,10 @@ const handleCallbackQuery = async (bot, cbq) => {
     switch (action) {
       case 'menu':
         return showMenu(bot, chatId);
-      case 'get_system_info':
-        return handleSystemInfo(bot, chatId);
-      case 'interface_status':
-        return handleInterfaceStatus(bot, chatId);
-      case 'list_connections':
-        return handleListConnections(bot, chatId);
-      case 'check_bandwidth':
-        return askSpeedtestMode(bot, chatId);
-      case 'bandwidth_auto_isp':
-        return handleBandwidthAutoISP(bot, chatId);
       case 'show_blacklist':
         return handleBlacklist(bot, chatId);
-      case 'show_chart':
-        return generateBandwidthChart(bot, chatId);
+      case 'add_whitelist':
+        return addWhitelistFlow(bot, chatId); // thêm dòng này
       case 'update_code_bot':
         return execUpdate(bot, chatId);
       case 'reboot_router':

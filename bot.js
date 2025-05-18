@@ -2,7 +2,6 @@ const TelegramBot = require('node-telegram-bot-api');
 const { telegram } = require('./config');
 const { initializeBotFeatures } = require('./features');
 const { AI_GiamSat, AI_Firewall } = require('./models/ai_firewall');
-const { CollectBandwidth } = require('./features/bandwidthTracker');
 const { monitorPPPoEs } = require('./models/wan_monitor');
 const { logToFile } = require('./utils/log');
 const db = require('./db');
@@ -20,10 +19,6 @@ setInterval(AI_GiamSat, 2*60*1000);
 // Kiểm tra kết nối WAN định kỳ
 monitorPPPoEs();
 setInterval(monitorPPPoEs, 5*60*1000);
-
-// Thống kê băng thông định kỳ
-// CollectBandwidth();
-// setInterval(CollectBandwidth, 60000);
 
 (async () => {
   try {

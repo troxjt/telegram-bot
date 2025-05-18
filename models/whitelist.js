@@ -5,4 +5,9 @@ async function KiemTraDanhSachWhitelist(mac) {
   return result.length > 0;
 }
 
-module.exports = { KiemTraDanhSachWhitelist };
+// Thêm MAC vào whitelist
+async function addToWhitelist(mac) {
+  await db.query('INSERT INTO whitelist (mac, added_date) VALUES (?, NOW())', [mac]);
+}
+
+module.exports = { KiemTraDanhSachWhitelist, addToWhitelist };
