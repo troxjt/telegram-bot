@@ -6,8 +6,8 @@ async function KiemTraDanhSachWhitelist(mac) {
 }
 
 // Thêm MAC vào whitelist
-async function addToWhitelist(mac) {
-  await db.query('INSERT INTO whitelist (mac, added_date) VALUES (?, NOW())', [mac]);
+async function addToWhitelist(ip, mac) {
+  await db.query('INSERT INTO whitelist (ip, mac, description) VALUES (?, ?, ?)', [ip, mac, 'Thêm bởi bot']);
 }
 
 module.exports = { KiemTraDanhSachWhitelist, addToWhitelist };

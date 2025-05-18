@@ -61,7 +61,7 @@ async function getUnwhitelistedDevices() {
 async function handleAddWhitelist(bot, chatId, mac, ip) {
   try {
     // Thêm vào whitelist
-    await addToWhitelist(mac);
+    await addToWhitelist(ip, mac);
 
     // Xóa khỏi các bảng liên quan trong DB
     await db.query('DELETE FROM bandwidth_limits WHERE mac = ?', [mac]);
@@ -70,15 +70,15 @@ async function handleAddWhitelist(bot, chatId, mac, ip) {
 
     // Xóa giới hạn/blocked trên Mikrotik
     const router = await connect();
-    // Xóa queue giới hạn băng thông
-    const queues = await safeWrite(router, '/queue/simple/print', [`?name=${mac}`]);
-    for (const q of queues) {
-      await safeWrite(router, '/queue/simple/remove', [`=.id=${q['.id']}`]);
-    }
-    // Xóa khỏi address-list blacklist
-    const addrLists = await safeWrite(router, '/ip/firewall/address-list/print', [`?address=${ip}`]);
-    for (const a of addrLists) {
-      await safeWrite(router, '/ip/firewall/address-list/remove', [`=.id=${a['.id']}`]);
+    const queues = await safeWrite(router, '/queue/simple/print');
+
+    for (const queue of queues) {
+      if (queue.target === ip) {
+        await safeWrite(router, '/queue/simple/remove', [
+          { '.id': queue['.id'] }
+        ]);
+        console.log(queue.name, queue.target);
+      }
     }
 
     sendAndDeleteMessage(bot, chatId, `✅ Đã thêm thiết bị ${mac} (${ip}) vào whitelist và dọn dẹp thành công.`);
