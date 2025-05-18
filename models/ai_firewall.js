@@ -39,7 +39,7 @@ async function AI_GiamSat() {
           await Promise.all([
             logSuspicious(mac, ip, iface, clientId),
             GuiThongBaoTele(alertMessage),
-            GioiHanBangThong(mac, `${ip}/32`, iface)
+            // GioiHanBangThong(mac, `${ip}/32`, iface)
           ]);
         }
 

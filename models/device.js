@@ -9,7 +9,7 @@ async function GioiHanBangThong(mac, ip, iface) {
   await safeWrite(router, '/queue/simple/add', [
     `=name=${mac}`,
     `=target=${ip}`,
-    '=max-limit=80M/80M',
+    '=max-limit=100M/100M',
     `=comment=AI Firewall`
   ]);
 
@@ -38,7 +38,7 @@ async function KiemTraKetNoi(mac, ip, iface) {
       }
     } else {
       await db.query('INSERT INTO connection_logs (mac, connection_date) VALUES (?, CURDATE()) ON DUPLICATE KEY UPDATE connection_date = VALUES(connection_date)', [mac]);
-      await GioiHanBangThong(mac, ip, iface);
+      // await GioiHanBangThong(mac, ip, iface);
     }
   } catch (err) {
     logToFile(`[LỖI] Không theo dõi kết nối cho MAC=${mac}: ${err.message}`);
