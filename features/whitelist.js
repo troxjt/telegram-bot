@@ -2,30 +2,91 @@ const { sendAndDeleteMessage } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 const db = require('../db');
 const { addToWhitelist } = require('../models/whitelist');
+const { connect, safeWrite } = require('../models/mikrotik');
 
-const addWhitelistFlow = (bot, chatId) => {
-  sendAndDeleteMessage(bot, chatId, '📝 Vui lòng nhập địa chỉ MAC của thiết bị muốn thêm vào whitelist (ví dụ: AA:BB:CC:DD:EE:FF):');
-  bot.once('message', async (msg) => {
-    const mac = (msg.text || '').trim().toUpperCase();
-    // Kiểm tra định dạng MAC đơn giản
-    if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac)) {
-      sendAndDeleteMessage(bot, chatId, '❌ Định dạng MAC không hợp lệ. Hủy thao tác.');
+const addWhitelistFlow = async (bot, chatId) => {
+  try {
+    // Lấy danh sách thiết bị chưa có trong whitelist
+    const arpList = await getUnwhitelistedDevices();
+    if (arpList.length === 0) {
+      sendAndDeleteMessage(bot, chatId, '✅ Tất cả thiết bị đã có trong whitelist.');
       return;
     }
-    try {
-      const exists = await db.query('SELECT 1 FROM whitelist WHERE mac = ?', [mac]);
-      if (exists.length > 0) {
-        sendAndDeleteMessage(bot, chatId, `⚠️ Thiết bị với MAC ${mac} đã có trong whitelist.`);
-        return;
-      }
-      await addToWhitelist(mac);
-      sendAndDeleteMessage(bot, chatId, `✅ Đã thêm thiết bị ${mac} vào whitelist.`);
-      logToFile(`[WHITELIST] Đã thêm MAC: ${mac}`);
-    } catch (err) {
-      logToFile(`[LỖI] Không thể thêm MAC vào whitelist: ${err.message}`);
-      sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi thêm thiết bị vào whitelist.');
-    }
-  });
+
+    // Hiển thị danh sách để chọn
+    const keyboard = arpList.slice(0, 10).map((d, idx) => [
+      { text: `${d.mac} (${d.ip})`, callback_data: `addwl_${d.mac}_${d.ip}` }
+    ]);
+    sendAndDeleteMessage(bot, chatId, '*Chọn thiết bị để thêm vào whitelist:*', {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: keyboard }
+    });
+
+    // Lắng nghe callback chọn thiết bị
+    const cbHandler = async (cbq) => {
+      if (!cbq.data.startsWith('addwl_')) return;
+      await bot.answerCallbackQuery(cbq.id);
+      const [_, mac, ip] = cbq.data.split('_');
+      await handleAddWhitelist(bot, chatId, mac, ip);
+      bot.removeListener('callback_query', cbHandler);
+    };
+    bot.on('callback_query', cbHandler);
+  } catch (err) {
+    logToFile(`[LỖI] Không thể lấy danh sách thiết bị chưa whitelist: ${err.message}`);
+    sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi lấy danh sách thiết bị.');
+  }
 };
+
+// Lấy danh sách thiết bị chưa có trong whitelist
+async function getUnwhitelistedDevices() {
+  // Lấy danh sách ARP từ Mikrotik
+  const router = await connect();
+  const arp = await safeWrite(router, '/ip/arp/print');
+  // Lấy danh sách MAC đã whitelist
+  const whitelist = await db.query('SELECT mac FROM whitelist');
+  const whitelistedMacs = whitelist.map(r => r.mac);
+  // Lọc thiết bị chưa whitelist
+  const result = [];
+  for (const d of arp) {
+    const mac = d['mac-address'];
+    const ip = d['address'];
+    if (mac && ip && !whitelistedMacs.includes(mac)) {
+      result.push({ mac, ip });
+    }
+  }
+  return result;
+}
+
+// Xử lý thêm vào whitelist và dọn dẹp
+async function handleAddWhitelist(bot, chatId, mac, ip) {
+  try {
+    // Thêm vào whitelist
+    await addToWhitelist(mac);
+
+    // Xóa khỏi các bảng liên quan trong DB
+    await db.query('DELETE FROM bandwidth_limits WHERE mac = ?', [mac]);
+    await db.query('DELETE FROM blocked_ips WHERE ip = ?', [ip]);
+    await db.query('DELETE FROM suspicious_devices WHERE mac = ?', [mac]);
+
+    // Xóa giới hạn/blocked trên Mikrotik
+    const router = await connect();
+    // Xóa queue giới hạn băng thông
+    const queues = await safeWrite(router, '/queue/simple/print', [`?name=${mac}`]);
+    for (const q of queues) {
+      await safeWrite(router, '/queue/simple/remove', [`=.id=${q['.id']}`]);
+    }
+    // Xóa khỏi address-list blacklist
+    const addrLists = await safeWrite(router, '/ip/firewall/address-list/print', [`?address=${ip}`]);
+    for (const a of addrLists) {
+      await safeWrite(router, '/ip/firewall/address-list/remove', [`=.id=${a['.id']}`]);
+    }
+
+    sendAndDeleteMessage(bot, chatId, `✅ Đã thêm thiết bị ${mac} (${ip}) vào whitelist và dọn dẹp thành công.`);
+    logToFile(`[WHITELIST] Đã thêm MAC: ${mac}, IP: ${ip} và dọn dẹp liên quan`);
+  } catch (err) {
+    logToFile(`[LỖI] Không thể thêm MAC vào whitelist: ${err.message}`);
+    sendAndDeleteMessage(bot, chatId, '❌ Lỗi khi thêm thiết bị vào whitelist.');
+  }
+}
 
 module.exports = { addWhitelistFlow };
