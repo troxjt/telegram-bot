@@ -1,5 +1,5 @@
 const { Client, Collection, GatewayIntentBits, EmbedBuilder  } = require("discord.js");
-const { token } = require('../config');
+const { token } = require('./config');
 const { AI_GiamSat, AI_Firewall } = require('./models/ai_firewall');
 const { monitorPPPoEs } = require('./models/wan_monitor');
 const { logToFile } = require('./utils/log');
