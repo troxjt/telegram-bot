@@ -4,18 +4,16 @@ module.exports = {
     name: "guildMemberRemove",
 	once: false,
 	async execute(member, client) {
-        const byebyeChannelId = "1284383002675253319";
-
         const byebyeEmbed = new EmbedBuilder()
             .setColor('#0099ff')
-            .setTitle('X Develop - Dịch vụ FiveM Việt Nam')
+            .setTitle('Cung cấp thiết bị, tài nguyên MMO')
             .setDescription(`Tạm biệt ${member}!`)
             .setThumbnail(member.user.displayAvatarURL())
-            .setImage(client.config.Info.Image)
+            // .setImage(client.config.Info.Image)
             .setFooter({ text: 'Hẹn gặp lại trong thời gian sớm nhất!', iconURL: member.guild.iconURL() })
             .setTimestamp();
 
-        const channel = member.guild.channels.cache.get(byebyeChannelId);
+        const channel = member.guild.channels.cache.get('1376769043440078908');
         if (channel) {
             channel.send({ embeds: [byebyeEmbed] });
         }
