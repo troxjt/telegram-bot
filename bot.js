@@ -15,13 +15,28 @@ const client = new Client({
 	],
 });
 
-const AI_Firewall_Path = path.join(__dirname, "ai");
+const AI_Firewall_Path = path.join(__dirname, "event/ai");
 const AI_Firewall_Files = fs
 	.readdirSync(AI_Firewall_Path)
 	.filter((file) => file.endsWith(".js"));
 
 for (const file of AI_Firewall_Files) {
 	const filePath = path.join(AI_Firewall_Path, file);
+	const event = require(filePath);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
+	} else {
+		client.on(event.name, (...args) => event.execute(...args, client));
+	}
+}
+
+const guildmemberPath = path.join(__dirname, "event/guildmember");
+const guildmemberFiles = fs
+	.readdirSync(guildmemberPath)
+	.filter((file) => file.endsWith(".js"));
+
+for (const file of guildmemberFiles) {
+	const filePath = path.join(guildmemberPath, file);
 	const event = require(filePath);
 	if (event.once) {
 		client.once(event.name, (...args) => event.execute(...args));

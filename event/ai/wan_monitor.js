@@ -1,7 +1,7 @@
-const { connect, safeWrite } = require('../models/mikrotik');
-const { logToFile } = require('../utils/log');
-const { sendDiscordMsg } = require('../utils/messageUtils');
-const { discord } = require('../config');
+const { connect, safeWrite } = require('../../models/mikrotik');
+const { logToFile } = require('../../utils/log');
+const { sendDiscordMsg } = require('../../utils/messageUtils');
+const { discord } = require('../../config');
 
 module.exports = {
   name: "ready",

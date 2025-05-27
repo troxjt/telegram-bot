@@ -1,13 +1,13 @@
-const { connect, safeWrite } = require('../models/mikrotik');
-const { KiemTraDanhSachWhitelist } = require('../models/whitelist');
-const { KiemTraDanhSachKhaNghi, logSuspicious } = require('../models/suspicious');
-const { sendDiscordMsg } = require('../utils/messageUtils');
-const { logToFile } = require('../utils/log');
-const { discord } = require('../config');
+const { connect, safeWrite } = require('../../models/mikrotik');
+const { KiemTraDanhSachWhitelist } = require('../../models/whitelist');
+const { KiemTraDanhSachKhaNghi, logSuspicious } = require('../../models/suspicious');
+const { sendDiscordMsg } = require('../../utils/messageUtils');
+const { logToFile } = require('../../utils/log');
+const { discord } = require('../../config');
 const {
   KiemTraKetNoi,
   DonDepThietBiTinCay
-} = require('../models/device');
+} = require('../../models/device');
 
 module.exports = {
   name: "ready",
