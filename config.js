@@ -4,7 +4,7 @@ const CONFIG = {
   discord: {
     token: process.env.DISCORD_TOKEN || '',
     guildId: process.env.DISCORD_GUILD_ID || '',
-    channelIdNotiRouter: process.env.DISCORD_CHANNEL_ID_NOTI_ROUTER || '',
+    channelIdNotiRouter: process.env.DISCORD_CHANNEL_ID_NOTI_ROUTER || ''
   },
   router: {
     host: process.env.ROUTER_HOST || '',
