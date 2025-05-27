@@ -1,9 +1,8 @@
 const { Client, Collection, GatewayIntentBits, EmbedBuilder  } = require("discord.js");
-const { token } = require('./config');
-const { AI_GiamSat, AI_Firewall } = require('./models/ai_firewall');
-const { monitorPPPoEs } = require('./models/wan_monitor');
+const fs = require('fs');
+const path = require("node:path");
+const { discord } = require('./config');
 const { logToFile } = require('./utils/log');
-const { sendDiscordMsg } = require('./utils/messageUtils');
 const db = require('./db');
 
 const client = new Client({
@@ -16,38 +15,27 @@ const client = new Client({
 	],
 });
 
-client.checkChannel = function CheckChannel(Client, ChannelId) {
-	if (Name && Client && ChannelId ) {
-		const Channel = Client.channels.cache.get(ChannelId);
-		if (Channel) {
-			return Channel;
-		} else {
-			console.error(`Kênh không tồn tại!`);
-		};
+const AI_Firewall_Path = path.join(__dirname, "ai");
+const AI_Firewall_Files = fs
+	.readdirSync(AI_Firewall_Path)
+	.filter((file) => file.endsWith(".js"));
+
+for (const file of AI_Firewall_Files) {
+	const filePath = path.join(AI_Firewall_Path, file);
+	const event = require(filePath);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
 	} else {
-		console.error('Thiếu dữ liệu');
-	};
-},
-
-// Xử lý danh sách tường lửa
-AI_Firewall();
-setInterval(AI_Firewall, 1*60*1000);
-
-// Giám sát thiết bị định kỳ
-AI_GiamSat();
-setInterval(AI_GiamSat, 2*60*1000);
-
-// Kiểm tra kết nối WAN định kỳ
-monitorPPPoEs();
-setInterval(monitorPPPoEs, 5*60*1000);
+		client.on(event.name, (...args) => event.execute(...args, client));
+	}
+}
 
 (async () => {
   try {
-    logToFile('[INIT] Kết nối với cơ sở dữ liệu ...');
     await db.connect();
-    logToFile('[BOT] Khởi tạo các tính năng bot ...');
-    client.login(token);
-    sendDiscordMsg('1376735228441133136', '[BOT] Bot đã sẵn sàng.');
+    logToFile('[INIT] Đã kết nối với cơ sở dữ liệu.');
+    client.login(discord.token);
+    logToFile('[BOT] Bot đã sẵn sàng.');
   } catch (err) {
     logToFile('[LỖI] Không thể bắt đầu bot:', err.message);
     process.exit(1);

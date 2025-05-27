@@ -1,6 +1,5 @@
 const { MessageFlags } = require("discord.js");
-const { message, telegram } = require('../config');
-const client = require('../bot');
+const { discord, message } = require('../config');
 const { logToFile } = require('./log');
 
 const DEFAULT_DELETE_DELAY = 10000;
@@ -33,29 +32,18 @@ const sendAndDeleteImg = (bot, chatId, photo, options = {}) => {
   return sendAndDelete(bot.sendPhoto.bind(bot), bot, chatId, photo, options, deleteDelay);
 };
 
-const GuiThongBaoTele = async (alertMessage) => {
+const sendDiscordMsg = async (client, channelId, content) => {
   try {
-    const text = alertMessage;
-    const url = `https://api.telegram.org/bot${telegram.token}/sendMessage?chat_id=${telegram.chatId}&text=${encodeURIComponent(text)}`;
-    await fetch(url);
-  } catch (err) {
-    // logToFile(`[LỖI] Không thể gửi cảnh báo qua Telegram: ${err.message}`);
-  }
-};
-
-const sendDiscordMsg = async (channelId, content) => {
-  const channel = await client.checkChannel(client, channelId);
-
-  if (!channel || !channel.isTextBased()) {
-    console.error(`Kênh không hợp lệ hoặc không phải kênh chat!`);
-    return;
-  }
-
-  try {
+    const guild = await client.guilds.fetch(discord.guildId);
+    const channel = await guild.channels.fetch(channelId);
+    if (!channel || !channel.isTextBased()) {
+      console.error(`Kênh không hợp lệ hoặc không phải kênh chat!`);
+      return;
+    }
     await channel.send({ content: content, flags: MessageFlags.Ephemeral });
   } catch (e) {
     console.error(e);
   }
-}
+};
 
-module.exports = { sendAndDeleteMessage, sendAndDeleteImg, GuiThongBaoTele, sendDiscordMsg };
+module.exports = { sendAndDeleteMessage, sendAndDeleteImg, sendDiscordMsg };

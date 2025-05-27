@@ -1,7 +1,11 @@
 require('dotenv').config();
 
 const CONFIG = {
-  token: process.env.DISCORD_TOKEN || '',
+  discord: {
+    token: process.env.DISCORD_TOKEN || '',
+    guildId: process.env.DISCORD_GUILD_ID || '',
+    channelIdNotiRouter: process.env.DISCORD_CHANNEL_ID_NOTI_ROUTER || '',
+  },
   router: {
     host: process.env.ROUTER_HOST || '',
     port: parseInt(process.env.ROUTER_PORT, 10) || 8728,
@@ -23,7 +27,7 @@ const CONFIG = {
   }
 };
 
-if (!CONFIG.telegram.token || !CONFIG.router.host || !CONFIG.db.host) {
+if (!CONFIG.discord.token || !CONFIG.router.host || !CONFIG.db.host) {
   throw new Error('❌ Missing required configuration in .env file.');
 }
 
