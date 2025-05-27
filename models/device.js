@@ -2,6 +2,7 @@ const db = require('../db');
 const { connect, safeWrite } = require('./mikrotik');
 const { logToFile } = require('../utils/log');
 const e = require('express');
+const { sendDiscordMsg } = require('../utils/messageUtils');
 
 async function GioiHanBangThong(mac, ip, iface) {
   const router = await connect();
@@ -78,7 +79,7 @@ async function ChanIp(ip, comment = 'Bi chan boi AI') {
   ]);
   await db.query('INSERT INTO blocked_ips (ip, blocked_date) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE blocked_date = NOW()', [ip]);
   const Text = `[CẢNH BÁO]\n🚫 Đã chặn IP nguy hiểm!\nIP: ${ip}`;
-  GuiThongBaoTele(Text);
+  sendDiscordMsg(Text);
   logToFile(`[MikroTik] 🚫 IP ${ip} đã bị chặn.`);
 }
 

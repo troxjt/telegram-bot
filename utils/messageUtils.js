@@ -1,4 +1,6 @@
+const { MessageFlags } = require("discord.js");
 const { message, telegram } = require('../config');
+const client = require('../bot');
 const { logToFile } = require('./log');
 
 const DEFAULT_DELETE_DELAY = 10000;
@@ -41,4 +43,19 @@ const GuiThongBaoTele = async (alertMessage) => {
   }
 };
 
-module.exports = { sendAndDeleteMessage, sendAndDeleteImg, GuiThongBaoTele };
+const sendDiscordMsg = async (channelId, content) => {
+  const channel = await client.checkChannel(client, channelId);
+
+  if (!channel || !channel.isTextBased()) {
+    console.error(`Kênh không hợp lệ hoặc không phải kênh chat!`);
+    return;
+  }
+
+  try {
+    await channel.send({ content: content, flags: MessageFlags.Ephemeral });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+module.exports = { sendAndDeleteMessage, sendAndDeleteImg, GuiThongBaoTele, sendDiscordMsg };

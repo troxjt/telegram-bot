@@ -1,11 +1,7 @@
 require('dotenv').config();
 
 const CONFIG = {
-  telegram: {
-    token: process.env.TELEGRAM_TOKEN || '',
-    chatId: process.env.TELEGRAM_CHAT_ID || '',
-    allowedUserId: parseInt(process.env.TELEGRAM_ALLOWED_USER_ID, 10) || 0
-  },
+  token: process.env.DISCORD_TOKEN || '',
   router: {
     host: process.env.ROUTER_HOST || '',
     port: parseInt(process.env.ROUTER_PORT, 10) || 8728,

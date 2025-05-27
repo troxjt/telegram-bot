@@ -1,6 +1,6 @@
 const { connect, safeWrite } = require('./mikrotik');
 const { logToFile } = require('../utils/log');
-const { GuiThongBaoTele } = require('../utils/messageUtils');
+const { sendDiscordMsg } = require('../utils/messageUtils');
 
 const pppoeList = ['pppoe-out1', 'pppoe-out2'];
 let previousStatus = {}; // Lưu trạng thái trước đó của các PPPoE
@@ -73,14 +73,14 @@ async function monitorPPPoEs() {
     // Gửi thông báo Telegram nếu có lỗi
     if (failedPPPoE > 0) {
       const message = `🚨 [ĐƯỜNG TRUYỀN MẤT TÍN HIỆU]!\n\n${failList.join('\n')}`;
-      await GuiThongBaoTele(message);
+      await sendDiscordMsg(message);
       // logToFile(`[CẢNH BÁO] ${failedPPPoE}/${totalPPPoE} kết nối PPPoE gặp sự cố.`);
     }
 
     // Gửi thông báo Telegram nếu có đường truyền được khôi phục
     if (recoveredList.length > 0) {
       const recoveryMessage = `✅ [ĐƯỜNG TRUYỀN ĐÃ KHÔI PHỤC]!\n\n${recoveredList.join('\n')}`;
-      await GuiThongBaoTele(recoveryMessage);
+      await sendDiscordMsg(recoveryMessage);
       // logToFile(`[THÔNG TIN] ${recoveredList.length} kết nối PPPoE đã được khôi phục.`);
     }
 

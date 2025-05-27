@@ -1,12 +1,33 @@
-const TelegramBot = require('node-telegram-bot-api');
-const { telegram } = require('./config');
-const { initializeBotFeatures } = require('./features');
+const { Client, Collection, GatewayIntentBits, EmbedBuilder  } = require("discord.js");
+const { token } = require('../config');
 const { AI_GiamSat, AI_Firewall } = require('./models/ai_firewall');
 const { monitorPPPoEs } = require('./models/wan_monitor');
 const { logToFile } = require('./utils/log');
+const { sendDiscordMsg } = require('./utils/messageUtils');
 const db = require('./db');
 
-const bot = new TelegramBot(telegram.token, { polling: true });
+const client = new Client({
+	intents: [
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.MessageContent,
+		GatewayIntentBits.GuildMembers,
+		GatewayIntentBits.GuildVoiceStates,
+	],
+});
+
+client.checkChannel = function CheckChannel(Client, ChannelId) {
+	if (Name && Client && ChannelId ) {
+		const Channel = Client.channels.cache.get(ChannelId);
+		if (Channel) {
+			return Channel;
+		} else {
+			console.error(`Kênh không tồn tại!`);
+		};
+	} else {
+		console.error('Thiếu dữ liệu');
+	};
+},
 
 // Xử lý danh sách tường lửa
 AI_Firewall();
@@ -25,10 +46,12 @@ setInterval(monitorPPPoEs, 5*60*1000);
     logToFile('[INIT] Kết nối với cơ sở dữ liệu ...');
     await db.connect();
     logToFile('[BOT] Khởi tạo các tính năng bot ...');
-    initializeBotFeatures(bot);
-    logToFile('[BOT] Bot Telegram đã sẵn sàng.');
+    client.login(token);
+    sendDiscordMsg('1376735228441133136', '[BOT] Bot đã sẵn sàng.');
   } catch (err) {
     logToFile('[LỖI] Không thể bắt đầu bot:', err.message);
     process.exit(1);
   }
 })();
+
+module.exports = { client };

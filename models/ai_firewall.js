@@ -1,7 +1,7 @@
 const { connect, safeWrite } = require('./mikrotik');
 const { KiemTraDanhSachWhitelist } = require('./whitelist');
 const { KiemTraDanhSachKhaNghi, logSuspicious } = require('./suspicious');
-const { GuiThongBaoTele } = require('../utils/messageUtils');
+const { sendDiscordMsg } = require('../utils/messageUtils');
 const { logToFile } = require('../utils/log');
 const {
   GioiHanBangThong,
@@ -38,7 +38,7 @@ async function AI_GiamSat() {
           const alertMessage = `[BÁO ĐỘNG] Thiết bị không có trong whitelist:\nMAC: ${mac}\nIP: ${ip}\nInterface: ${iface}`
           await Promise.all([
             logSuspicious(mac, ip, iface, clientId),
-            GuiThongBaoTele(alertMessage),
+            sendDiscordMsg(alertMessage),
             // GioiHanBangThong(mac, `${ip}/32`, iface)
           ]);
         }
@@ -97,7 +97,7 @@ async function AI_Firewall() {
             ]);
 
             const text = `🚨 Đã chặn IP nguy hiểm!\nIP: ${ip}\nĐiểm: ${score}`;
-            await GuiThongBaoTele(text);
+            await sendDiscordMsg(text);
             logToFile(`[BÁO ĐỘNG] Đã chặn IP nguy hiểm: ${ip} với điểm ${score}`);
           }
         }
